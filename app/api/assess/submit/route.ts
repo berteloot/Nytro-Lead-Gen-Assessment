@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { validateEmail } from '@/lib/utils'
 
 const prisma = new PrismaClient()
 
@@ -16,6 +17,15 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const validatedData = submitSchema.parse(body)
+
+    // Additional email validation to prevent generic emails
+    const emailValidation = validateEmail(validatedData.email)
+    if (!emailValidation.isValid) {
+      return NextResponse.json(
+        { success: false, error: emailValidation.error || 'Invalid email address' },
+        { status: 400 }
+      )
+    }
 
     // Upsert user
     const user = await prisma.user.upsert({

@@ -26,9 +26,74 @@ export function getScoreBarColor(score: number): string {
   return "bg-red-500"
 }
 
-export function validateEmail(email: string): boolean {
+export function validateEmail(email: string): { isValid: boolean; error?: string } {
+  // Basic email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
+  if (!emailRegex.test(email)) {
+    return { isValid: false, error: 'Please enter a valid email address' }
+  }
+
+  const [localPart, domain] = email.toLowerCase().split('@')
+  
+  // Block generic email providers
+  const blockedProviders = [
+    'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com',
+    'aol.com', 'icloud.com', 'me.com', 'mac.com', 'protonmail.com',
+    'tutanota.com', 'yandex.com', 'mail.ru', 'gmx.com', 'web.de',
+    'zoho.com', 'fastmail.com', 'hey.com', 'temp-mail.org', '10minutemail.com',
+    'guerrillamail.com', 'mailinator.com', 'throwaway.email', 'tempmail.net',
+    'example.com', 'test.com', 'demo.com', 'sample.com', 'fake.com',
+    'noreply.com', 'no-reply.com'
+  ]
+
+  if (blockedProviders.includes(domain)) {
+    return { 
+      isValid: false, 
+      error: 'Please use your company email address instead of a personal email provider' 
+    }
+  }
+
+  // Block obviously fake domains
+  const fakePatterns = [
+    /^test/, /^demo/, /^sample/, /^fake/, /^temp/, /^temporary/,
+    /^example/, /^dummy/, /^placeholder/, /^your/, /^company/
+  ]
+
+  if (fakePatterns.some(pattern => pattern.test(domain))) {
+    return { 
+      isValid: false, 
+      error: 'Please use a real company email address' 
+    }
+  }
+
+  // Block generic local parts
+  const genericLocalParts = [
+    'test', 'demo', 'sample', 'fake', 'temp', 'temporary', 'example',
+    'dummy', 'placeholder', 'your', 'company', 'business', 'admin',
+    'info', 'contact', 'hello', 'hi', 'user', 'guest', 'visitor'
+  ]
+
+  if (genericLocalParts.includes(localPart)) {
+    return { 
+      isValid: false, 
+      error: 'Please use your actual name or a professional email address' 
+    }
+  }
+
+  // Block disposable email domains (common ones)
+  const disposablePatterns = [
+    /mailinator/, /guerrillamail/, /10minutemail/, /tempmail/, /throwaway/,
+    /temp-mail/, /trashmail/, /sharklasers/, /grr.la/, /guerrillamailblock/
+  ]
+
+  if (disposablePatterns.some(pattern => pattern.test(domain))) {
+    return { 
+      isValid: false, 
+      error: 'Please use a permanent email address, not a temporary one' 
+    }
+  }
+
+  return { isValid: true }
 }
 
 export function generateAssessmentId(): string {

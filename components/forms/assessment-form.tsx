@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
-import { getIndustryOptions, getCompanySizeOptions, getMaturityOptions, calculateProgress } from '@/lib/utils'
+import { getIndustryOptions, getCompanySizeOptions, getMaturityOptions, calculateProgress, validateEmail } from '@/lib/utils'
 import { type AssessmentResponses } from '@/lib/scoring'
 
 interface AssessmentFormProps {
@@ -28,6 +28,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
     companySize: '',
     responses: {} as AssessmentResponses,
   })
+  const [emailError, setEmailError] = useState<string>('')
 
   const totalSteps = 7
 
@@ -36,6 +37,12 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
       ...prev,
       [field]: value,
     }))
+    
+    // Validate email in real-time
+    if (field === 'email') {
+      const validation = validateEmail(value)
+      setEmailError(validation.isValid ? '' : validation.error || '')
+    }
   }
 
   const updateResponses = (module: string, lever: string, data: { present: boolean; maturity: number }) => {
@@ -82,7 +89,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
       case 6:
         return true // Assessment questions
       case 7:
-        return formData.email && formData.company // Email and company at the end
+        return formData.email && formData.company && !emailError // Email and company at the end
       default:
         return false
     }
@@ -192,7 +199,14 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
                   onChange={(e) => updateFormData('email', e.target.value)}
                   placeholder="your@company.com"
                   required
+                  className={emailError ? 'border-red-500 focus:border-red-500' : ''}
                 />
+                {emailError && (
+                  <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                )}
+                {formData.email && !emailError && (
+                  <p className="text-green-600 text-sm mt-1">✓ Valid company email</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Company *</label>
