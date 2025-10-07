@@ -1,0 +1,182 @@
+'use client'
+
+import { useState } from 'react'
+// import { useRouter } from 'next/navigation'
+import { AssessmentForm } from '@/components/forms/assessment-form'
+import { ResultsDashboard } from '@/components/results/results-dashboard'
+import { type AssessmentResponses } from '@/lib/scoring'
+
+interface AssessmentData {
+  email: string
+  company: string
+  industry?: string
+  companySize?: string
+  responses: AssessmentResponses
+}
+
+interface AssessmentResult {
+  assessmentId: string
+  scores: {
+    inbound: number
+    outbound: number
+    content: number
+    paid: number
+    nurture: number
+    infra: number
+    attr: number
+    overall: number
+  }
+  summary: string
+  growthLevers: Array<{
+    name: string
+    why: string
+    expectedImpact: string
+    confidence: 'low' | 'medium' | 'high'
+    firstStep: string
+  }>
+  riskFlags: string[]
+  company: string
+  industry?: string
+}
+
+export default function AssessPage() {
+  // const router = useRouter()
+  const [step, setStep] = useState<'form' | 'loading' | 'results'>('form')
+  const [result, setResult] = useState<AssessmentResult | null>(null)
+  // const [isLoading, setIsLoading] = useState(false)
+
+  const handleFormComplete = async (data: AssessmentData) => {
+    // setIsLoading(true)
+    setStep('loading')
+
+    try {
+      // Submit assessment
+      const submitResponse = await fetch('/api/assess/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!submitResponse.ok) {
+        throw new Error('Failed to submit assessment')
+      }
+
+      const { assessmentId } = await submitResponse.json()
+
+      // Score assessment
+      const scoreResponse = await fetch('/api/assess/score', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          assessmentId,
+          company: data.company,
+          industry: data.industry,
+          responses: data.responses
+        }),
+      })
+
+      if (!scoreResponse.ok) {
+        const errText = await scoreResponse.text()
+        console.error('Score API error:', errText)
+        throw new Error('Failed to score assessment')
+      }
+
+      const assessmentResult = await scoreResponse.json()
+      setResult({
+        assessmentId: assessmentId,
+        scores: assessmentResult.scores,
+        summary: assessmentResult.recommendation.summary,
+        growthLevers: assessmentResult.recommendation.levers,
+        riskFlags: assessmentResult.recommendation.risks,
+        company: data.company,
+        industry: data.industry
+      })
+      setStep('results')
+    } catch (error) {
+      console.error('Assessment error:', error)
+      alert('Something went wrong. Please try again.')
+      setStep('form')
+    } finally {
+      // setIsLoading(false)
+    }
+  }
+
+  const handleDownloadPDF = async () => {
+    if (!result) return
+
+    try {
+      const response = await fetch(`/api/pdf/${result.assessmentId}`)
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `leadgen-assessment-${result.assessmentId}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      }
+    } catch (error) {
+      console.error('PDF download error:', error)
+      alert('Failed to download PDF. Please try again.')
+    }
+  }
+
+  const handleBookAudit = () => {
+    // This would typically open a Calendly widget or redirect to booking page
+    window.open('https://calendly.com/your-username/15min', '_blank')
+  }
+
+  const handleEmailReport = async () => {
+    if (!result) return
+
+    try {
+      // This would typically send an email with the report
+      // For now, we'll just show a success message
+      alert('Report will be emailed to you shortly!')
+    } catch (error) {
+      console.error('Email error:', error)
+      alert('Failed to send email. Please try again.')
+    }
+  }
+
+  if (step === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold mb-2">Analyzing Your Assessment</h2>
+          <p className="text-gray-600">This may take a few moments...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'results' && result) {
+    return (
+      <ResultsDashboard
+        assessmentId={result.assessmentId}
+        scores={result.scores}
+        summary={result.summary}
+        growthLevers={result.growthLevers}
+        riskFlags={result.riskFlags}
+        company={result.company || 'Your Company'}
+        industry={result.industry}
+        onDownloadPDF={handleDownloadPDF}
+        onBookAudit={handleBookAudit}
+        onEmailReport={handleEmailReport}
+      />
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <AssessmentForm onComplete={handleFormComplete} />
+    </div>
+  )
+}

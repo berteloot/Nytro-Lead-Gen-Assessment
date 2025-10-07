@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  company      String?
+  createdAt    DateTime @default(now())
+  assessments  Assessment[]
+}
+
+model Assessment {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  industry       String?
+  companySize    String?
+  // raw response payloads per module for transparency and re-scoring
+  responses      Json
+  // normalized sub-scores 0-100 by dimension
+  scoreInbound   Int      @default(0)
+  scoreOutbound  Int      @default(0)
+  scoreContent   Int      @default(0)
+  scorePaid      Int      @default(0)
+  scoreNurture   Int      @default(0)
+  scoreInfra     Int      @default(0) // stack, data, integrations
+  scoreAttribution Int    @default(0)
+  scoreOverall   Int      @default(0)
+  growthLevers   Json     // array of recommended levers with confidence
+  riskFlags      Json     // integration gaps, compliance, deliverability
+  benchmarkPct   Int?     // percentile vs peers (later when you have data)
+  pdfUrl         String?  // populated after PDF generation
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Benchmark {
+  id           String   @id @default(cuid())
+  industry     String
+  dim          String   // inbound|outbound|content|paid|nurture|infra|attr
+  p25          Int
+  p50          Int
+  p75          Int
+  updatedAt    DateTime @updatedAt
+
+  @@unique([industry, dim], name: "industry_dim")
+}
