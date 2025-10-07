@@ -3,14 +3,15 @@ import { scoreAssessment, computeGaps, fallbackLeversFromGaps, extractStack } fr
 import OpenAI from 'openai'
 import { recommendationPrompt, type RecommendationInput } from '@/lib/prompts'
 
+// Prevent prerendering and force Node runtime
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const prisma = new PrismaClient()
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-
-async function getAIRecommendation(input: RecommendationInput) {
-  const completion = await openai.chat.completions.create({
+async function getAIRecommendation(client: OpenAI, input: RecommendationInput) {
+  const completion = await client.chat.completions.create({
     model: 'gpt-3.5-turbo',
     messages: [
       {
@@ -44,19 +45,31 @@ export async function POST(req: Request) {
 
     const scores = scoreAssessment(body.responses);
 
-    let ai;
-    try {
-      ai = await getAIRecommendation({
-        company: body.company ?? '',
-        industry: body.industry ?? '',
-        scores,
-        gaps: computeGaps(scores),
-        stack: extractStack(body.responses),
-      });
-    } catch (e) {
-      console.error('OpenAI recommendation failed:', e);
-      // deterministic fallback so the client still gets a usable result
-      ai = {
+    // Lazy construct client only if a key exists at REQUEST time
+    const apiKey = process.env.OPENAI_API_KEY;
+    let recommendation: { summary: string; levers: Array<{ name: string; why: string; expectedImpact: string; confidence: string; firstStep: string }>; risks: string[] };
+
+    if (apiKey) {
+      try {
+        const client = new OpenAI({ apiKey });
+        recommendation = await getAIRecommendation(client, {
+          company: body.company ?? '',
+          industry: body.industry ?? '',
+          scores,
+          gaps: computeGaps(scores),
+          stack: extractStack(body.responses),
+        });
+      } catch (e) {
+        console.error('OpenAI recommendation failed:', e);
+        recommendation = {
+          summary: 'Assessment completed successfully. Here are your key growth opportunities.',
+          levers: fallbackLeversFromGaps(scores),
+          risks: [],
+        };
+      }
+    } else {
+      // No key at runtime. Use deterministic fallback.
+      recommendation = {
         summary: 'Assessment completed successfully. Here are your key growth opportunities.',
         levers: fallbackLeversFromGaps(scores),
         risks: [],
@@ -75,12 +88,12 @@ export async function POST(req: Request) {
         scoreInfra: scores.infra,
         scoreAttribution: scores.attr,
         scoreOverall: scores.overall,
-        growthLevers: ai.levers,
-        riskFlags: ai.risks
+        growthLevers: recommendation.levers,
+        riskFlags: recommendation.risks
       }
     });
 
-    return Response.json({ scores, recommendation: ai });
+    return Response.json({ scores, recommendation });
   } catch (err: unknown) {
     console.error('Score route error', err);
     return Response.json({ error: (err as Error)?.message ?? 'Unexpected error' }, { status: 500 });
