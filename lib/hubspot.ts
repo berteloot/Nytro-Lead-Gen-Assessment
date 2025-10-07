@@ -235,7 +235,7 @@ Source: LeadGen Assessment Tool`;
           amount: '0',
           closedate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
           lead_source: 'LeadGen Assessment',
-          leadgen_assessment_score: data.overallScore.toString(),
+          leadgen_assessment_score: data.overallScore,
         },
         associations: {
           contactIds: [contact.id],

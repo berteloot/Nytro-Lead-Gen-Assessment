@@ -213,7 +213,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
               <p className="text-gray-600">Click below to complete your assessment and receive your personalized lead generation report.</p>
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  <strong>What happens next:</strong> We'll analyze your responses and generate a comprehensive report with scores, recommendations, and actionable next steps for improving your lead generation.
+                  <strong>What happens next:</strong> We&apos;ll analyze your responses and generate a comprehensive report with scores, recommendations, and actionable next steps for improving your lead generation.
                 </p>
               </div>
             </div>

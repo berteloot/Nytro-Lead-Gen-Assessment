@@ -78,7 +78,7 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
     attr: 8           // Important but not as weighted
   };
 
-  const moduleScore = (answers: any = {}, leverWeights: Record<string, number>) => {
+  const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number }> = {}, leverWeights: Record<string, number>) => {
     let s = 0, max = 0;
     for (const k of Object.keys(leverWeights)) {
       const w = leverWeights[k] ?? 0;

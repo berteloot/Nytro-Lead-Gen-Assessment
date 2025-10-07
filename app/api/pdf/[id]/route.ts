@@ -55,7 +55,8 @@ export async function GET(
     // Generate PDF
     const pdfElement = React.createElement(AssessmentPdf, { assessment: pdfData })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pdfBuffer = await pdf(pdfElement as any).toBuffer()
+    const pdfDoc = await pdf(pdfElement as any)
+    const pdfBuffer = await pdfDoc.toBuffer()
 
     // Update assessment with PDF URL (optional - could be stored in cloud storage)
     const pdfUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/api/pdf/${assessmentId}`
@@ -64,8 +65,8 @@ export async function GET(
       data: { pdfUrl },
     })
 
-    // Return PDF
-    return new NextResponse(pdfBuffer as Buffer, {
+    // Return PDF using the stream directly
+    return new Response(pdfBuffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="leadgen-assessment-${assessmentId}.pdf"`,

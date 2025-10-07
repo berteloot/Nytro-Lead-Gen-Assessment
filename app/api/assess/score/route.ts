@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import { scoreAssessment, computeGaps, fallbackLeversFromGaps, extractStack, type AssessmentResponses } from '@/lib/scoring'
+import { scoreAssessment, computeGaps, fallbackLeversFromGaps, extractStack } from '@/lib/scoring'
 import OpenAI from 'openai'
 import { recommendationPrompt, type RecommendationInput } from '@/lib/prompts'
 
@@ -82,9 +81,9 @@ export async function POST(req: Request) {
     });
 
     return Response.json({ scores, recommendation: ai });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Score route error', err);
-    return Response.json({ error: err?.message ?? 'Unexpected error' }, { status: 500 });
+    return Response.json({ error: (err as Error)?.message ?? 'Unexpected error' }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
