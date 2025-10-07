@@ -132,13 +132,6 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
             />
           )}
 
-          {currentStep === 2 && (
-            <EventsStep 
-              responses={formData.responses}
-              onUpdate={updateResponses}
-            />
-          )}
-
           {currentStep === 3 && (
             <ContentPaidStep 
               responses={formData.responses}

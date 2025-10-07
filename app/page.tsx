@@ -21,12 +21,11 @@ export default function HomePage() {
             <span className="text-sm font-semibold text-[#F86A0E] uppercase tracking-wide">Powered by Nytro Marketing</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-[#313C59] mb-6">
-            Elevate. Fuel. Create.
-            <span className="text-[#F86A0E] block">Lead Generation Assessment</span>
+            Lead Generation Assessment &amp; Opportunity Map
           </h1>
           <p className="text-xl text-[#313C59] mb-8 max-w-3xl mx-auto">
             Discover your lead generation gaps and get personalized recommendations 
-            to boost your B2B marketing performance in just 5 minutes.
+            to boost your B2B marketing performance. Complete in 90 seconds.
           </p>
           <Link href="/assess">
             <Button size="lg" className="text-lg px-8 py-4 bg-[#F86A0E] hover:bg-[#e55a0a] text-white">
@@ -47,10 +46,19 @@ export default function HomePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-[#313C59]">
+              <p className="text-[#313C59] mb-3">
                 Get scored across 7 key areas: inbound, outbound, content, paid, 
                 nurturing, infrastructure, and attribution.
               </p>
+              <div className="text-sm text-gray-600">
+                <p className="mb-2"><strong>Inbound Marketing:</strong> SEO, lead magnets, webinars, employee advocacy</p>
+                <p className="mb-2"><strong>Outbound Sales:</strong> Email sequences, LinkedIn outreach, phone, deliverability</p>
+                <p className="mb-2"><strong>Events & Conferences:</strong> Trade shows, conferences, virtual events, sponsorships</p>
+                <p className="mb-2"><strong>Content & Paid:</strong> Blog, case studies, PPC, social ads, retargeting</p>
+                <p className="mb-2"><strong>Lead Nurturing:</strong> Drip campaigns, lead scoring, intent signals</p>
+                <p className="mb-2"><strong>Infrastructure:</strong> CRM, marketing automation, data enrichment</p>
+                <p><strong>Attribution:</strong> Multi-touch attribution, analytics dashboards, CTA tracking</p>
+              </div>
             </CardContent>
           </Card>
 
@@ -99,7 +107,7 @@ export default function HomePage() {
               </div>
               <h3 className="font-semibold mb-2 text-[#313C59]">Answer Questions</h3>
               <p className="text-sm text-[#313C59]">
-                Complete a 5-step assessment about your current marketing setup
+                Complete a 7-step assessment about your current marketing setup
               </p>
             </div>
             <div className="text-center">
