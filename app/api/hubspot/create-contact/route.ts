@@ -116,16 +116,14 @@ Assessment completed on: ${new Date().toISOString()}`;
       }
     }
 
-    // Create engagement note with assessment results if available
+    // Create note with assessment results if available
     if (assessmentData && contactId) {
       try {
-        await hs("/crm/v3/objects/engagements", {
+        await hs("/crm/v3/objects/notes", {
           method: "POST",
           body: JSON.stringify({
-            engagement: {
-              type: "NOTE",
-              timestamp: Date.now(),
-              body: assessmentData,
+            properties: {
+              hs_note_body: assessmentData,
             },
             associations: [
               {
@@ -142,9 +140,9 @@ Assessment completed on: ${new Date().toISOString()}`;
             ],
           }),
         });
-      } catch (engagementError) {
-        console.error("Failed to create engagement note:", engagementError);
-        // Don't fail the entire operation if engagement creation fails
+      } catch (noteError) {
+        console.error("Failed to create note:", noteError);
+        // Don't fail the entire operation if note creation fails
       }
     }
 
@@ -152,7 +150,7 @@ Assessment completed on: ${new Date().toISOString()}`;
       ok: true, 
       contactId, 
       ...(isUpdated && { updated: true }),
-      ...(assessmentData && { engagementNoteCreated: true })
+      ...(assessmentData && { noteCreated: true })
     });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : "Unexpected error";
