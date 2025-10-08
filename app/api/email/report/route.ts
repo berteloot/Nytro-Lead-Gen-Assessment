@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import sgMail from '@sendgrid/mail'
-import { pdf, renderToBuffer } from '@react-pdf/renderer'
-import React from 'react'
-import { AssessmentPdf } from '@/lib/pdf'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -61,8 +58,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prepare data for PDF
-    const pdfData = {
+    // Prepare data for email template
+    const assessmentData: AssessmentData = {
       user: {
         company: assessment.user.company || 'Unknown Company',
         email: assessment.user.email,
@@ -88,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create comprehensive email HTML template with full report
-    const emailHtml = createFullReportEmailTemplate(assessment.user.company || 'Unknown Company', assessment.scoreOverall, pdfData)
+    const emailHtml = createFullReportEmailTemplate(assessment.user.company || 'Unknown Company', assessment.scoreOverall, assessmentData)
 
     // Send comprehensive HTML email report
     const msg = {
@@ -116,7 +113,32 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function createFullReportEmailTemplate(companyName: string, overallScore: number, assessmentData: any): string {
+interface AssessmentData {
+  user: {
+    company: string;
+    email: string;
+  };
+  industry?: string;
+  scoreInbound: number;
+  scoreOutbound: number;
+  scoreContent: number;
+  scorePaid: number;
+  scoreNurture: number;
+  scoreInfra: number;
+  scoreAttribution: number;
+  scoreOverall: number;
+  growthLevers: Array<{
+    name: string;
+    why: string;
+    expectedImpact: string;
+    confidence: string;
+    firstStep: string;
+  }>;
+  riskFlags: string[];
+  createdAt: string;
+}
+
+function createFullReportEmailTemplate(companyName: string, overallScore: number, assessmentData: AssessmentData): string {
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#059669'; // green
     if (score >= 60) return '#d97706'; // orange
@@ -355,7 +377,7 @@ function createFullReportEmailTemplate(companyName: string, overallScore: number
             <!-- Growth Opportunities -->
             <div class="section">
                 <div class="section-title">Top Growth Opportunities</div>
-                ${assessmentData.growthLevers.map((lever: any, index: number) => `
+                ${assessmentData.growthLevers.map((lever, index: number) => `
                     <div class="lever-item">
                         <div class="lever-title">${index + 1}. ${lever.name}</div>
                         <div class="lever-description">${lever.why}</div>
