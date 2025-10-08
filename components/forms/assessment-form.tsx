@@ -192,35 +192,76 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
           )}
 
           {currentStep === 6 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Almost done!</h3>
-              <p className="text-gray-600">We just need a few details to personalize your results.</p>
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-bold text-gray-900">🎯 Almost done!</h3>
+                <p className="text-gray-600 text-lg">Get your personalized assessment report delivered instantly</p>
+              </div>
+              
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-blue-800">
+                      <strong>We'll email your detailed report</strong> with personalized recommendations, growth opportunities, and actionable insights to help you improve your lead generation.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium mb-2">Email *</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">
+                  📧 Your Work Email <span className="text-red-500">*</span>
+                </label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateFormData('email', e.target.value)}
-                  placeholder="your@company.com"
+                  placeholder="name@yourcompany.com"
                   required
-                  className={emailError ? 'border-red-500 focus:border-red-500' : ''}
+                  className={emailError ? 'border-red-500 focus:border-red-500' : 'border-gray-300'}
                 />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  💡 Please use your work email to receive your comprehensive assessment report
+                </p>
                 {emailError && (
-                  <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                  <div className="flex items-center mt-2 text-red-600 text-sm">
+                    <svg className="h-4 w-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                    </svg>
+                    {emailError}
+                  </div>
                 )}
                 {formData.email && !emailError && (
-                  <p className="text-green-600 text-sm mt-1">✓ Valid company email</p>
+                  <div className="flex items-center mt-2 text-green-600 text-sm font-medium">
+                    <svg className="h-4 w-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                    </svg>
+                    Perfect! We'll send your report here
+                  </div>
                 )}
               </div>
+              
               <div>
-                <label className="block text-sm font-medium mb-2">Company *</label>
+                <label className="block text-sm font-semibold mb-2 text-gray-900">
+                  🏢 Company Name <span className="text-red-500">*</span>
+                </label>
                 <Input
                   type="text"
                   value={formData.company}
                   onChange={(e) => updateFormData('company', e.target.value)}
                   placeholder="Your Company Name"
                   required
+                  className="border-gray-300"
                 />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  We'll personalize your report with your company name
+                </p>
               </div>
             </div>
           )}
