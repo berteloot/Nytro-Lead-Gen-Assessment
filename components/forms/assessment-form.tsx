@@ -13,8 +13,8 @@ interface AssessmentFormProps {
   onComplete: (data: {
     email: string
     company: string
-    industry?: string
-    companySize?: string
+    industry: string
+    companySize: string
     responses: AssessmentResponses
   }) => void
 }
@@ -85,7 +85,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
       case 4:
         return true // Assessment questions
       case 5:
-        return true // Assessment questions
+        return formData.industry && formData.companySize // Company Details - Industry and Company Size required
       case 6:
         return true // Assessment questions
       case 7:
@@ -157,7 +157,9 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Company Details</h3>
               <div>
-                <label className="block text-sm font-medium mb-2">Industry</label>
+                <label className="block text-sm font-medium mb-2">
+                  Industry <span className="text-red-500">*</span>
+                </label>
                 <Select
                   value={formData.industry}
                   onChange={(e) => updateFormData('industry', e.target.value)}
@@ -171,7 +173,9 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
                 </Select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Company Size</label>
+                <label className="block text-sm font-medium mb-2">
+                  Company Size <span className="text-red-500">*</span>
+                </label>
                 <Select
                   value={formData.companySize}
                   onChange={(e) => updateFormData('companySize', e.target.value)}
