@@ -119,28 +119,24 @@ Assessment completed on: ${new Date().toISOString()}`;
     // Create note with assessment results if available
     if (assessmentData && contactId) {
       try {
-        await hs("/crm/v3/objects/notes", {
+        // First, create the note
+        const noteResponse = await hs("/crm/v3/objects/notes", {
           method: "POST",
           body: JSON.stringify({
             properties: {
               hs_note_body: assessmentData,
               hs_timestamp: new Date().toISOString(),
             },
-            associations: [
-              {
-                to: {
-                  id: parseInt(contactId),
-                },
-                types: [
-                  {
-                    associationCategory: "HUBSPOT_DEFINED",
-                    associationTypeId: 1, // Contact association type
-                  },
-                ],
-              },
-            ],
           }),
         });
+
+        // Then, associate the note with the contact
+        if (noteResponse.id) {
+          await hs(`/crm/v3/objects/notes/${noteResponse.id}/associations/contacts/${contactId}/note_to_contact`, {
+            method: "PUT",
+            body: JSON.stringify({}),
+          });
+        }
       } catch (noteError) {
         console.error("Failed to create note:", noteError);
         // Don't fail the entire operation if note creation fails
