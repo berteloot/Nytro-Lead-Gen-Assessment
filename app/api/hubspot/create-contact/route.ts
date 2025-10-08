@@ -21,6 +21,7 @@ async function hs(path: string, init?: RequestInit) {
 
 export async function POST(req: Request) {
   try {
+    console.log('=== HubSpot Create Contact Called ===');
     console.log('HubSpot API Key exists:', !!process.env.HUBSPOT_API_KEY);
     console.log('HubSpot API Key length:', process.env.HUBSPOT_API_KEY?.length || 0);
     
@@ -30,6 +31,8 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+    console.log('Request body received:', JSON.stringify(body, null, 2));
+    
     const { 
       email, 
       firstname, 
@@ -41,8 +44,11 @@ export async function POST(req: Request) {
     } = body || {};
     
     if (!email) {
+      console.error('Email is missing from request');
       return NextResponse.json({ error: "email is required" }, { status: 400 });
     }
+
+    console.log('Processing contact:', { email, company, industry, companySize });
 
     // Build contact properties with HubSpot best practices
     const contactProperties: Record<string, string> = {
@@ -114,6 +120,7 @@ ${riskFlags && riskFlags.length > 0 ? `\n⚠️ RISK AREAS:\n${riskFlags.map((ri
     let isUpdated = false;
     
     try {
+      console.log('Attempting to create HubSpot contact with properties:', contactProperties);
       const created = await hs("/crm/v3/objects/contacts", {
         method: "POST",
         body: JSON.stringify({
@@ -121,9 +128,11 @@ ${riskFlags && riskFlags.length > 0 ? `\n⚠️ RISK AREAS:\n${riskFlags.map((ri
         }),
       });
       contactId = created.id;
+      console.log('Contact created successfully with ID:', contactId);
     } catch (e: unknown) {
       // If contact exists, PATCH it
       if (e instanceof Error && e.message.includes("409")) {
+        console.log('Contact exists (409), attempting to update...');
         // Look up by email to get id
         const search = await hs("/crm/v3/objects/contacts/search", {
           method: "POST",
@@ -136,13 +145,16 @@ ${riskFlags && riskFlags.length > 0 ? `\n⚠️ RISK AREAS:\n${riskFlags.map((ri
         const existing = search?.results?.[0];
         if (!existing) throw e;
 
+        console.log('Found existing contact, updating ID:', existing.id);
         const updated = await hs(`/crm/v3/objects/contacts/${existing.id}`, {
           method: "PATCH",
           body: JSON.stringify({ properties: contactProperties }),
         });
         contactId = updated.id;
         isUpdated = true;
+        console.log('Contact updated successfully');
       } else {
+        console.error('Failed to create contact:', e);
         throw e;
       }
     }
@@ -150,6 +162,7 @@ ${riskFlags && riskFlags.length > 0 ? `\n⚠️ RISK AREAS:\n${riskFlags.map((ri
     // Create note with formatted assessment results if available
     if (assessmentSummary && contactId) {
       try {
+        console.log('Creating note for contact...');
         // Create the note with proper formatting
         const noteResponse = await hs("/crm/v3/objects/notes", {
           method: "POST",
@@ -162,12 +175,15 @@ ${riskFlags && riskFlags.length > 0 ? `\n⚠️ RISK AREAS:\n${riskFlags.map((ri
           }),
         });
 
+        console.log('Note created with ID:', noteResponse.id);
+
         // Associate the note with the contact
         if (noteResponse.id) {
           await hs(`/crm/v3/objects/notes/${noteResponse.id}/associations/contacts/${contactId}/note_to_contact`, {
             method: "PUT",
             body: JSON.stringify({}),
           });
+          console.log('Note associated with contact successfully');
         }
       } catch (noteError) {
         console.error("Failed to create note:", noteError);
@@ -175,6 +191,7 @@ ${riskFlags && riskFlags.length > 0 ? `\n⚠️ RISK AREAS:\n${riskFlags.map((ri
       }
     }
 
+    console.log('=== HubSpot Contact Created Successfully ===');
     return NextResponse.json({ 
       ok: true, 
       contactId, 

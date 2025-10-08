@@ -91,7 +91,14 @@ export default function AssessPage() {
 
       // Create HubSpot contact with assessment results
       try {
-        await fetch('/api/hubspot/create-contact', {
+        console.log('Attempting to create HubSpot contact...', {
+          email: data.email,
+          company: data.company,
+          industry: data.industry,
+          companySize: data.companySize
+        });
+        
+        const hubspotResponse = await fetch('/api/hubspot/create-contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -109,6 +116,14 @@ export default function AssessPage() {
             }
           }),
         });
+
+        if (!hubspotResponse.ok) {
+          const errorData = await hubspotResponse.json();
+          console.error('HubSpot API error:', errorData);
+        } else {
+          const hubspotData = await hubspotResponse.json();
+          console.log('HubSpot contact created successfully:', hubspotData);
+        }
       } catch (hubspotError) {
         console.error('HubSpot contact creation failed:', hubspotError);
         // Don't fail the entire flow if HubSpot fails
