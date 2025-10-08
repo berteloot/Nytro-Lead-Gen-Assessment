@@ -128,8 +128,8 @@ export default function AssessPage() {
   }
 
   const handleBookAudit = () => {
-    // This would typically open a Calendly widget or redirect to booking page
-    window.open('https://calendly.com/your-username/15min', '_blank')
+    // Open HubSpot meeting scheduler
+    window.open('https://meetings.hubspot.com/stanislas-berteloot', '_blank')
   }
 
   const handleEmailReport = async () => {
