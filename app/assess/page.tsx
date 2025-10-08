@@ -37,6 +37,7 @@ interface AssessmentResult {
   riskFlags: string[]
   company: string
   industry?: string
+  email: string
 }
 
 export default function AssessPage() {
@@ -118,7 +119,8 @@ export default function AssessPage() {
         growthLevers: assessmentResult.recommendation.levers,
         riskFlags: assessmentResult.recommendation.risks,
         company: data.company,
-        industry: data.industry
+        industry: data.industry,
+        email: data.email
       })
       setStep('results')
     } catch (error) {
@@ -161,9 +163,23 @@ export default function AssessPage() {
     if (!result) return
 
     try {
-      // This would typically send an email with the report
-      // For now, we'll just show a success message
-      alert('Report will be emailed to you shortly!')
+      const response = await fetch('/api/email/report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assessmentId: result.assessmentId,
+          email: result.email,
+        }),
+      })
+
+      if (response.ok) {
+        alert('Report sent successfully! Check your email for the PDF attachment.')
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to send email: ${errorData.error || 'Unknown error'}`)
+      }
     } catch (error) {
       console.error('Email error:', error)
       alert('Failed to send email. Please try again.')

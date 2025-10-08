@@ -47,6 +47,7 @@ export async function GET(
       riskFlags: assessment.riskFlags as string[],
       company: assessment.user.company || 'Unknown Company',
       industry: assessment.industry,
+      email: assessment.user.email,
       createdAt: assessment.createdAt,
     })
   } catch (error) {

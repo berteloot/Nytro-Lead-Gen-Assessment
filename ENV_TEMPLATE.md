@@ -38,6 +38,17 @@ HUBSPOT_API_KEY="pat-..."
 HUBSPOT_SOURCE="leadgen-assessment"
 
 # =============================================================================
+# SENDGRID (Required for Email Reports)
+# =============================================================================
+# SendGrid API key for sending emails
+# Get from: https://app.sendgrid.com/settings/api_keys
+# Security: Server-side only, never exposed to client
+SENDGRID_API_KEY="SG..."
+
+# Email address to send reports from (must be verified in SendGrid)
+FROM_EMAIL="info@nytromarketing.com"
+
+# =============================================================================
 # ANALYTICS (Optional)
 # =============================================================================
 # PostHog analytics key
