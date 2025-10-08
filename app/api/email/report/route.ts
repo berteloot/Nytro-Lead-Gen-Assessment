@@ -27,6 +27,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if SendGrid is configured
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error('SENDGRID_API_KEY is not configured')
+      return NextResponse.json(
+        { error: 'Email service is not configured. Please contact support.' },
+        { status: 500 }
+      )
+    }
+
+    if (!process.env.FROM_EMAIL) {
+      console.error('FROM_EMAIL is not configured')
+      return NextResponse.json(
+        { error: 'Email service is not configured. Please contact support.' },
+        { status: 500 }
+      )
+    }
+
     // Get assessment with user data
     const assessment = await prisma.assessment.findUnique({
       where: { id: assessmentId },

@@ -104,7 +104,11 @@ export default function ResultsPage() {
         alert('Report sent successfully! Check your email for the PDF attachment.')
       } else {
         const errorData = await response.json()
-        alert(`Failed to send email: ${errorData.error || 'Unknown error'}`)
+        if (errorData.error?.includes('not configured')) {
+          alert('Email service is currently unavailable. Please use the "Download PDF Report" button instead.')
+        } else {
+          alert(`Failed to send email: ${errorData.error || 'Unknown error'}`)
+        }
       }
     } catch (error) {
       console.error('Email error:', error)
