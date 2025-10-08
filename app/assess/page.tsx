@@ -44,7 +44,8 @@ export default function AssessPage() {
   // const router = useRouter()
   const [step, setStep] = useState<'form' | 'loading' | 'results'>('form')
   const [result, setResult] = useState<AssessmentResult | null>(null)
-  // const [isLoading, setIsLoading] = useState(false)
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
+  const [isEmailingReport, setIsEmailingReport] = useState(false)
 
   const handleFormComplete = async (data: AssessmentData) => {
     // setIsLoading(true)
@@ -135,6 +136,7 @@ export default function AssessPage() {
   const handleDownloadPDF = async () => {
     if (!result) return
 
+    setIsDownloadingPDF(true)
     try {
       const response = await fetch(`/api/pdf/${result.assessmentId}`)
       if (response.ok) {
@@ -151,6 +153,8 @@ export default function AssessPage() {
     } catch (error) {
       console.error('PDF download error:', error)
       alert('Failed to download PDF. Please try again.')
+    } finally {
+      setIsDownloadingPDF(false)
     }
   }
 
@@ -162,6 +166,7 @@ export default function AssessPage() {
   const handleEmailReport = async () => {
     if (!result) return
 
+    setIsEmailingReport(true)
     try {
       const response = await fetch('/api/email/report', {
         method: 'POST',
@@ -187,6 +192,8 @@ export default function AssessPage() {
     } catch (error) {
       console.error('Email error:', error)
       alert('Failed to send email. Please try again.')
+    } finally {
+      setIsEmailingReport(false)
     }
   }
 
@@ -215,6 +222,8 @@ export default function AssessPage() {
         onDownloadPDF={handleDownloadPDF}
         onBookAudit={handleBookAudit}
         onEmailReport={handleEmailReport}
+        isDownloadingPDF={isDownloadingPDF}
+        isEmailingReport={isEmailingReport}
       />
     )
   }
