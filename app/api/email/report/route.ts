@@ -83,15 +83,11 @@ export async function POST(request: NextRequest) {
       createdAt: assessment.createdAt.toISOString(),
     }
 
-    // Generate PDF
+    // Generate PDF directly to Buffer
     const pdfElement = React.createElement(AssessmentPdf, { assessment: pdfData })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfDoc = await pdf(pdfElement as any)
-    const pdfStream = await pdfDoc.toBuffer()
-    
-    // Convert ReadableStream to Buffer
-    const arrayBuffer = await new Response(pdfStream).arrayBuffer()
-    const pdfBuffer = Buffer.from(arrayBuffer)
+    const pdfBuffer = await pdfDoc.toBuffer()
     const base64Pdf = pdfBuffer.toString('base64')
 
     // Create email HTML template
