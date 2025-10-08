@@ -154,7 +154,6 @@ ${riskFlags && riskFlags.length > 0 ? `\n⚠️ RISK AREAS:\n${riskFlags.map((ri
             properties: {
               hs_note_body: assessmentSummary,
               hs_timestamp: new Date().toISOString(),
-              hs_note_source: "LEAD_GEN_ASSESSMENT",
             },
           }),
         });
