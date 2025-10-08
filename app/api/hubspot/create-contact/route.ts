@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       ...(company && { company }),
       ...(industry && { industry }),
       ...(companySize && { company_size: companySize }),
+      lifecyclestage: "marketingqualifiedlead", // Set as Marketing Qualified Lead
     };
 
     // Store assessment results for later use as engagement note
