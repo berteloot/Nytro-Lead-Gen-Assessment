@@ -175,7 +175,7 @@ export default function AssessPage() {
       })
 
       if (response.ok) {
-        alert('Report sent successfully! Check your email for the PDF attachment.')
+        alert('Report sent successfully! Check your email for your comprehensive assessment report.')
       } else {
         const errorData = await response.json()
         if (errorData.error?.includes('not configured')) {
