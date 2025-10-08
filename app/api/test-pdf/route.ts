@@ -51,7 +51,23 @@ export async function GET() {
     console.log('Testing PDF generation...')
     const pdfElement = React.createElement(AssessmentPdf, { assessment: pdfData })
     const pdfDoc = await pdf(pdfElement as any)
-    const pdfBuffer = await pdfDoc.toBuffer()
+    const pdfStream = await pdfDoc.toBuffer()
+    
+    // Handle the stream properly - convert to Buffer
+    let pdfBuffer: Buffer;
+    if (Buffer.isBuffer(pdfStream)) {
+      pdfBuffer = pdfStream;
+    } else {
+      // If it's a stream, convert it to Buffer
+      const chunks: Buffer[] = [];
+      const reader = pdfStream.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(Buffer.from(value));
+      }
+      pdfBuffer = Buffer.concat(chunks);
+    }
     
     console.log('PDF buffer size:', pdfBuffer.length)
     console.log('PDF buffer first 20 bytes:', Array.from(pdfBuffer.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' '))

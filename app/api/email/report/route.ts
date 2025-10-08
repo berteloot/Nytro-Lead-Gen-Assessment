@@ -94,9 +94,29 @@ export async function POST(request: NextRequest) {
       const pdfElement = React.createElement(AssessmentPdf, { assessment: pdfData })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const pdfDoc = await pdf(pdfElement as any)
-      pdfBuffer = await pdfDoc.toBuffer()
+      const pdfStream = await pdfDoc.toBuffer()
+      
+      // Handle the stream properly - convert to Buffer
+      console.log('PDF stream type:', typeof pdfStream);
+      console.log('PDF stream constructor:', pdfStream?.constructor?.name);
+      
+      // If it's already a Buffer, use it directly
+      if (Buffer.isBuffer(pdfStream)) {
+        pdfBuffer = pdfStream;
+      } else {
+        // If it's a stream, convert it to Buffer
+        const chunks: Buffer[] = [];
+        const reader = pdfStream.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(Buffer.from(value));
+        }
+        pdfBuffer = Buffer.concat(chunks);
+      }
+      
       console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
-      console.log('PDF buffer first 10 bytes:', pdfBuffer.slice(0, 10));
+      console.log('PDF buffer first 10 bytes:', Array.from(pdfBuffer.slice(0, 10)));
     } catch (pdfError) {
       console.error('PDF generation failed:', pdfError);
       return NextResponse.json(
