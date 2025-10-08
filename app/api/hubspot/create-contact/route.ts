@@ -124,6 +124,7 @@ Assessment completed on: ${new Date().toISOString()}`;
           body: JSON.stringify({
             properties: {
               hs_note_body: assessmentData,
+              hs_timestamp: new Date().toISOString(),
             },
             associations: [
               {
