@@ -376,12 +376,6 @@ function EventsStep({
           onChange={(data) => onUpdate('events', 'conferences', data)}
         />
         <LeverQuestion
-          label="Virtual Events"
-          description="Online webinars, virtual trade shows, and digital conferences that reach prospects remotely"
-          value={responses.events?.virtualEvents}
-          onChange={(data) => onUpdate('events', 'virtualEvents', data)}
-        />
-        <LeverQuestion
           label="Event Sponsorships"
           description="Sponsoring industry events, webinars, or conferences to increase brand visibility and lead generation"
           value={responses.events?.sponsorships}
@@ -575,7 +569,7 @@ function NurtureInfraStep({
         />
         <LeverQuestion
           label="Real-time Data Sync"
-          description="Bidirectional, near real-time sync between CRM, MAP, and data warehouse"
+          description="Bidirectional, near real-time sync between CRM, MAP (Marketing Automation Platform), and data warehouse"
           value={responses.infra?.realtimeSync}
           onChange={(data) => onUpdate('infra', 'realtimeSync', data)}
         />

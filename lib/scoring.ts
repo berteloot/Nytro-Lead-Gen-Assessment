@@ -11,7 +11,6 @@ export interface AssessmentResponses {
   events: {
     tradeShows?: { present: boolean; maturity: number };
     conferences?: { present: boolean; maturity: number };
-    virtualEvents?: { present: boolean; maturity: number };
     sponsorships?: { present: boolean; maturity: number };
     leadCapture?: { present: boolean; maturity: number };
     preBookedMeetings?: { present: boolean; maturity: number };
@@ -104,7 +103,6 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   const eventsScore = moduleScore(eventsData, { 
     tradeShows: 3,    // Major B2B lead generation channel
     conferences: 3,   // Thought leadership and networking
-    virtualEvents: 2, // Growing importance post-COVID
     sponsorships: 1,  // More brand than lead gen
     leadCapture: 3,   // Critical - systematic lead capture
     preBookedMeetings: 2, // High value - pre-qualified meetings
