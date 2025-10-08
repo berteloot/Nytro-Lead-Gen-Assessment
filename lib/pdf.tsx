@@ -216,6 +216,7 @@ export function AssessmentPdf({ assessment }: { assessment: AssessmentData }) {
       <Page size="A4" style={styles.page}>
         {/* Logo */}
         <View style={styles.logoContainer}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image 
             style={styles.logo} 
             src="/logo_Nytro_color.png"
