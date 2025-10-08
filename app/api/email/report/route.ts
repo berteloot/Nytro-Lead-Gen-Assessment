@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       html: emailHtml,
       attachments: [
         {
-          content: pdfBuffer.toString('base64'),
+          content: Buffer.from(pdfBuffer).toString('base64'),
           filename: `leadgen-assessment-${assessmentId}.pdf`,
           type: 'application/pdf',
           disposition: 'attachment',
@@ -104,8 +104,6 @@ export async function POST(request: NextRequest) {
 }
 
 function createEmailTemplate(companyName: string, overallScore: number): string {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000'
-  
   return `
 <!DOCTYPE html>
 <html lang="en">
