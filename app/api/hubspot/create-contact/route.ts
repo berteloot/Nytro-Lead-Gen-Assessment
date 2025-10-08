@@ -50,7 +50,8 @@ export async function POST(req: Request) {
 
     console.log('Processing contact:', { email, company, industry, companySize });
 
-    // Build contact properties with HubSpot best practices
+    // Build contact properties with standard HubSpot fields only
+    // Note: Custom properties need to be created in HubSpot first
     const contactProperties: Record<string, string> = {
       email,
       ...(firstname && { firstname }),
@@ -59,27 +60,10 @@ export async function POST(req: Request) {
       ...(industry && { industry }),
       ...(companySize && { company_size: companySize }),
       lifecyclestage: "marketingqualifiedlead",
-      lead_status: "new",
-      lead_source: "leadgen_assessment",
-      // Assessment completion tracking
-      assessment_completed: "yes",
-      assessment_date: new Date().toISOString(),
     };
 
-    // Add assessment scores as custom properties (if assessment results provided)
-    if (assessmentResults?.scores) {
-      const { scores } = assessmentResults;
-      Object.assign(contactProperties, {
-        assessment_overall_score: scores.overall?.toString() || "",
-        assessment_inbound_score: scores.inbound?.toString() || "",
-        assessment_outbound_score: scores.outbound?.toString() || "",
-        assessment_content_score: scores.content?.toString() || "",
-        assessment_paid_score: scores.paid?.toString() || "",
-        assessment_nurture_score: scores.nurture?.toString() || "",
-        assessment_infrastructure_score: scores.infra?.toString() || "",
-        assessment_attribution_score: scores.attr?.toString() || "",
-      });
-    }
+    // Store scores in the note instead of custom properties
+    // TODO: Create custom properties in HubSpot to store individual scores
 
     // Create formatted assessment summary for note
     let assessmentSummary = null;
