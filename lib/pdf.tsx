@@ -219,7 +219,6 @@ export function AssessmentPdf({ assessment }: { assessment: AssessmentData }) {
           <Image 
             style={styles.logo} 
             src="/logo_Nytro_color.png"
-            alt="Nytro Marketing Logo"
           />
         </View>
 
