@@ -28,6 +28,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if SendGrid is configured
+    console.log('SendGrid API Key exists:', !!process.env.SENDGRID_API_KEY);
+    console.log('SendGrid API Key length:', process.env.SENDGRID_API_KEY?.length || 0);
+    console.log('From Email:', process.env.FROM_EMAIL);
+    
     if (!process.env.SENDGRID_API_KEY) {
       console.error('SENDGRID_API_KEY is not configured')
       return NextResponse.json(
@@ -84,11 +88,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate PDF directly to Buffer
-    const pdfElement = React.createElement(AssessmentPdf, { assessment: pdfData })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pdfDoc = await pdf(pdfElement as any)
-    const pdfBuffer = await pdfDoc.toBuffer()
-    const base64Pdf = pdfBuffer.toString('base64')
+    console.log('Starting PDF generation...');
+    let base64Pdf: string;
+    try {
+      const pdfElement = React.createElement(AssessmentPdf, { assessment: pdfData })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfDoc = await pdf(pdfElement as any)
+      const pdfBuffer = await pdfDoc.toBuffer()
+      base64Pdf = pdfBuffer.toString('base64')
+      console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+    } catch (pdfError) {
+      console.error('PDF generation failed:', pdfError);
+      return NextResponse.json(
+        { error: 'PDF generation failed', details: String(pdfError) },
+        { status: 500 }
+      );
+    }
 
     // Create email HTML template
     const emailHtml = createEmailTemplate(assessment.user.company || 'Unknown Company', assessment.scoreOverall)
