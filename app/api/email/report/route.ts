@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import sgMail from '@sendgrid/mail'
-import { pdf } from '@react-pdf/renderer'
+import { pdf, renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
 import { AssessmentPdf } from '@/lib/pdf'
 
@@ -87,72 +87,18 @@ export async function POST(request: NextRequest) {
       createdAt: assessment.createdAt.toISOString(),
     }
 
-    // Generate PDF directly to Buffer
-    console.log('Starting PDF generation...');
-    let pdfBuffer: Buffer;
-    try {
-      const pdfElement = React.createElement(AssessmentPdf, { assessment: pdfData })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pdfDoc = await pdf(pdfElement as any)
-      const pdfStream = await pdfDoc.toBuffer()
-      
-      // Handle the stream properly - convert to Buffer
-      console.log('PDF stream type:', typeof pdfStream);
-      console.log('PDF stream constructor:', pdfStream?.constructor?.name);
-      
-      // If it's already a Buffer, use it directly
-      if (Buffer.isBuffer(pdfStream)) {
-        pdfBuffer = pdfStream;
-      } else {
-        // If it's a stream, convert it to Buffer
-        const chunks: Buffer[] = [];
-        const reader = pdfStream.getReader();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(Buffer.from(value));
-        }
-        pdfBuffer = Buffer.concat(chunks);
-      }
-      
-      console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
-      console.log('PDF buffer first 10 bytes:', Array.from(pdfBuffer.slice(0, 10)));
-    } catch (pdfError) {
-      console.error('PDF generation failed:', pdfError);
-      return NextResponse.json(
-        { error: 'PDF generation failed', details: String(pdfError) },
-        { status: 500 }
-      );
-    }
+    // Create comprehensive email HTML template with full report
+    const emailHtml = createFullReportEmailTemplate(assessment.user.company || 'Unknown Company', assessment.scoreOverall, pdfData)
 
-    // Convert to base64 for email attachment
-    const base64Pdf = pdfBuffer.toString('base64');
-    console.log('Base64 PDF length:', base64Pdf.length);
-    console.log('Base64 starts with:', base64Pdf.substring(0, 20));
-
-    // Create email HTML template
-    const emailHtml = createEmailTemplate(assessment.user.company || 'Unknown Company', assessment.scoreOverall)
-
-    // Send email with PDF attachment
+    // Send comprehensive HTML email report
     const msg = {
       to: email,
       from: process.env.FROM_EMAIL || 'info@nytromarketing.com',
       subject: `Your Lead Generation Assessment Report - ${assessment.user.company}`,
       html: emailHtml,
-      attachments: [
-        {
-          content: base64Pdf,
-          filename: `leadgen-assessment-${assessmentId}.pdf`,
-          type: 'application/pdf',
-          disposition: 'attachment',
-          content_id: `pdf-${assessmentId}`,
-        },
-      ],
     }
 
-    console.log('Sending email with attachment...');
-    console.log('Attachment filename:', `leadgen-assessment-${assessmentId}.pdf`);
-    console.log('Attachment size:', base64Pdf.length, 'characters');
+    console.log('Sending comprehensive HTML email report...');
 
     await sgMail.send(msg)
 
@@ -170,7 +116,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function createEmailTemplate(companyName: string, overallScore: number): string {
+function createFullReportEmailTemplate(companyName: string, overallScore: number, assessmentData: any): string {
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#059669'; // green
+    if (score >= 60) return '#d97706'; // orange
+    return '#dc2626'; // red
+  };
+
+  const getScoreText = (score: number) => {
+    if (score >= 80) return 'Excellent! You have a strong foundation.';
+    if (score >= 60) return 'Good progress! There are opportunities to optimize.';
+    return 'Significant opportunities for improvement identified.';
+  };
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -183,7 +141,7 @@ function createEmailTemplate(companyName: string, overallScore: number): string 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f8fafc;
@@ -226,6 +184,66 @@ function createEmailTemplate(companyName: string, overallScore: number): string 
             font-weight: bold;
             color: #F86A0E;
             margin: 0;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #F86A0E;
+            padding-bottom: 5px;
+        }
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px 0;
+        }
+        .score-bar {
+            width: 150px;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            margin-left: 15px;
+        }
+        .score-fill {
+            height: 8px;
+            border-radius: 4px;
+        }
+        .lever-item {
+            background-color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 3px solid #F86A0E;
+        }
+        .lever-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        .lever-description {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        .lever-impact {
+            font-size: 14px;
+            font-weight: 500;
+            color: #059669;
+        }
+        .risk-item {
+            font-size: 14px;
+            color: #dc2626;
+            margin: 5px 0;
+            padding-left: 15px;
         }
         .cta-button {
             display: inline-block;
@@ -272,25 +290,89 @@ function createEmailTemplate(companyName: string, overallScore: number): string 
         <div class="content">
             <h2>Hi ${companyName} team!</h2>
             
-            <p>Thank you for completing our Lead Generation Assessment. Your comprehensive report is attached to this email, providing detailed insights into your current lead generation maturity and actionable recommendations for growth.</p>
+            <p>Thank you for completing our Lead Generation Assessment. Your comprehensive report is below, providing detailed insights into your current lead generation maturity and actionable recommendations for growth.</p>
             
             <div class="score-highlight">
                 <p style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600;">Overall Lead Generation Score:</p>
                 <p class="score-number">${overallScore}/100</p>
-                <p style="margin: 10px 0 0 0; color: #6b7280;">
-                    ${overallScore >= 80 ? 'Excellent! You have a strong foundation.' : 
-                      overallScore >= 60 ? 'Good progress! There are opportunities to optimize.' : 
-                      'Significant opportunities for improvement identified.'}
-                </p>
+                <p style="margin: 10px 0 0 0; color: #6b7280;">${getScoreText(overallScore)}</p>
             </div>
-            
-            <p>Your report includes:</p>
-            <ul>
-                <li><strong>Detailed score breakdown</strong> across 7 key areas</li>
-                <li><strong>Top growth opportunities</strong> with expected impact</li>
-                <li><strong>Risk areas</strong> that need immediate attention</li>
-                <li><strong>Actionable recommendations</strong> to improve your lead generation</li>
-            </ul>
+
+            <!-- Score Breakdown -->
+            <div class="section">
+                <div class="section-title">Score Breakdown</div>
+                <div class="score-row">
+                    <span>Inbound Marketing</span>
+                    <span>${assessmentData.scoreInbound}/100</span>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${assessmentData.scoreInbound}%; background-color: ${getScoreColor(assessmentData.scoreInbound)};"></div>
+                    </div>
+                </div>
+                <div class="score-row">
+                    <span>Outbound Sales</span>
+                    <span>${assessmentData.scoreOutbound}/100</span>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${assessmentData.scoreOutbound}%; background-color: ${getScoreColor(assessmentData.scoreOutbound)};"></div>
+                    </div>
+                </div>
+                <div class="score-row">
+                    <span>Content Marketing</span>
+                    <span>${assessmentData.scoreContent}/100</span>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${assessmentData.scoreContent}%; background-color: ${getScoreColor(assessmentData.scoreContent)};"></div>
+                    </div>
+                </div>
+                <div class="score-row">
+                    <span>Paid Advertising</span>
+                    <span>${assessmentData.scorePaid}/100</span>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${assessmentData.scorePaid}%; background-color: ${getScoreColor(assessmentData.scorePaid)};"></div>
+                    </div>
+                </div>
+                <div class="score-row">
+                    <span>Lead Nurturing</span>
+                    <span>${assessmentData.scoreNurture}/100</span>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${assessmentData.scoreNurture}%; background-color: ${getScoreColor(assessmentData.scoreNurture)};"></div>
+                    </div>
+                </div>
+                <div class="score-row">
+                    <span>Marketing Infrastructure</span>
+                    <span>${assessmentData.scoreInfra}/100</span>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${assessmentData.scoreInfra}%; background-color: ${getScoreColor(assessmentData.scoreInfra)};"></div>
+                    </div>
+                </div>
+                <div class="score-row">
+                    <span>Attribution & Analytics</span>
+                    <span>${assessmentData.scoreAttribution}/100</span>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${assessmentData.scoreAttribution}%; background-color: ${getScoreColor(assessmentData.scoreAttribution)};"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Growth Opportunities -->
+            <div class="section">
+                <div class="section-title">Top Growth Opportunities</div>
+                ${assessmentData.growthLevers.map((lever: any, index: number) => `
+                    <div class="lever-item">
+                        <div class="lever-title">${index + 1}. ${lever.name}</div>
+                        <div class="lever-description">${lever.why}</div>
+                        <div class="lever-impact">Expected Impact: ${lever.expectedImpact} (Confidence: ${lever.confidence})</div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <!-- Risk Areas -->
+            ${assessmentData.riskFlags && assessmentData.riskFlags.length > 0 ? `
+            <div class="section">
+                <div class="section-title">Risk Areas</div>
+                ${assessmentData.riskFlags.map((risk: string) => `
+                    <div class="risk-item">• ${risk}</div>
+                `).join('')}
+            </div>
+            ` : ''}
             
             <p>Ready to implement these recommendations? Let's discuss how Nytro can help accelerate your lead generation results.</p>
             
