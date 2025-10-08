@@ -127,9 +127,19 @@ Assessment completed on: ${new Date().toISOString()}`;
               timestamp: Date.now(),
               body: assessmentData,
             },
-            associations: {
-              contactIds: [parseInt(contactId)],
-            },
+            associations: [
+              {
+                to: {
+                  id: parseInt(contactId),
+                },
+                types: [
+                  {
+                    associationCategory: "HUBSPOT_DEFINED",
+                    associationTypeId: 1, // Contact association type
+                  },
+                ],
+              },
+            ],
           }),
         });
       } catch (engagementError) {
