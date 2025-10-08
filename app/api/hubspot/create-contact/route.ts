@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "email is required" }, { status: 400 });
     }
 
-    // Build contact properties
+    // Build contact properties with HubSpot best practices
     const contactProperties: Record<string, string> = {
       email,
       ...(firstname && { firstname }),
@@ -52,34 +52,60 @@ export async function POST(req: Request) {
       ...(company && { company }),
       ...(industry && { industry }),
       ...(companySize && { company_size: companySize }),
-      lifecyclestage: "marketingqualifiedlead", // Set as Marketing Qualified Lead
+      lifecyclestage: "marketingqualifiedlead",
+      lead_status: "new",
+      lead_source: "leadgen_assessment",
+      // Assessment completion tracking
+      assessment_completed: "yes",
+      assessment_date: new Date().toISOString(),
     };
 
-    // Store assessment results for later use as engagement note
-    let assessmentData = null;
+    // Add assessment scores as custom properties (if assessment results provided)
+    if (assessmentResults?.scores) {
+      const { scores } = assessmentResults;
+      Object.assign(contactProperties, {
+        assessment_overall_score: scores.overall?.toString() || "",
+        assessment_inbound_score: scores.inbound?.toString() || "",
+        assessment_outbound_score: scores.outbound?.toString() || "",
+        assessment_content_score: scores.content?.toString() || "",
+        assessment_paid_score: scores.paid?.toString() || "",
+        assessment_nurture_score: scores.nurture?.toString() || "",
+        assessment_infrastructure_score: scores.infra?.toString() || "",
+        assessment_attribution_score: scores.attr?.toString() || "",
+      });
+    }
+
+    // Create formatted assessment summary for note
+    let assessmentSummary = null;
     if (assessmentResults) {
       const { scores, summary, growthLevers, riskFlags } = assessmentResults;
       
       if (scores) {
-        assessmentData = `Lead Generation Assessment Results:
-Overall Score: ${scores.overall}/100
-Inbound: ${scores.inbound}/100
-Outbound: ${scores.outbound}/100
-Content: ${scores.content}/100
-Paid: ${scores.paid}/100
-Nurture: ${scores.nurture}/100
-Infrastructure: ${scores.infra}/100
-Attribution: ${scores.attr}/100
+        assessmentSummary = `🎯 LEAD GENERATION ASSESSMENT RESULTS
 
-${summary ? `Summary: ${summary}` : ''}
+📊 SCORE BREAKDOWN:
+• Overall Score: ${scores.overall}/100
+• Inbound Marketing: ${scores.inbound}/100
+• Outbound Sales: ${scores.outbound}/100
+• Content Marketing: ${scores.content}/100
+• Paid Advertising: ${scores.paid}/100
+• Lead Nurturing: ${scores.nurture}/100
+• Marketing Infrastructure: ${scores.infra}/100
+• Attribution & Analytics: ${scores.attr}/100
 
-${growthLevers && growthLevers.length > 0 ? `Top Growth Opportunities:
-${growthLevers.slice(0, 3).map((lever: { name: string; expectedImpact: string }, i: number) => `${i + 1}. ${lever.name} - ${lever.expectedImpact}`).join('\n')}` : ''}
+📈 COMPANY DETAILS:
+• Industry: ${industry || 'Not specified'}
+• Company Size: ${companySize || 'Not specified'}
+• Company: ${company || 'Not specified'}
 
-${riskFlags && riskFlags.length > 0 ? `Risk Areas:
-${riskFlags.map((risk: string) => `• ${risk}`).join('\n')}` : ''}
+${summary ? `\n📋 SUMMARY:\n${summary}\n` : ''}
 
-Assessment completed on: ${new Date().toISOString()}`;
+${growthLevers && growthLevers.length > 0 ? `\n🚀 TOP GROWTH OPPORTUNITIES:\n${growthLevers.slice(0, 3).map((lever: { name: string; expectedImpact: string }, i: number) => `${i + 1}. ${lever.name}\n   Impact: ${lever.expectedImpact}`).join('\n\n')}\n` : ''}
+
+${riskFlags && riskFlags.length > 0 ? `\n⚠️ RISK AREAS:\n${riskFlags.map((risk: string) => `• ${risk}`).join('\n')}\n` : ''}
+
+📅 Assessment completed: ${new Date().toLocaleDateString()}
+🔗 Source: Lead Generation Assessment Tool`;
       }
     }
 
@@ -121,21 +147,22 @@ Assessment completed on: ${new Date().toISOString()}`;
       }
     }
 
-    // Create note with assessment results if available
-    if (assessmentData && contactId) {
+    // Create note with formatted assessment results if available
+    if (assessmentSummary && contactId) {
       try {
-        // First, create the note
+        // Create the note with proper formatting
         const noteResponse = await hs("/crm/v3/objects/notes", {
           method: "POST",
           body: JSON.stringify({
             properties: {
-              hs_note_body: assessmentData,
+              hs_note_body: assessmentSummary,
               hs_timestamp: new Date().toISOString(),
+              hs_note_source: "LEAD_GEN_ASSESSMENT",
             },
           }),
         });
 
-        // Then, associate the note with the contact
+        // Associate the note with the contact
         if (noteResponse.id) {
           await hs(`/crm/v3/objects/notes/${noteResponse.id}/associations/contacts/${contactId}/note_to_contact`, {
             method: "PUT",
@@ -152,7 +179,10 @@ Assessment completed on: ${new Date().toISOString()}`;
       ok: true, 
       contactId, 
       ...(isUpdated && { updated: true }),
-      ...(assessmentData && { noteCreated: true })
+      ...(assessmentSummary && { noteCreated: true }),
+      industry: industry || null,
+      companySize: companySize || null,
+      overallScore: assessmentResults?.scores?.overall || null
     });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : "Unexpected error";
