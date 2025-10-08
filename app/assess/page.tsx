@@ -86,6 +86,31 @@ export default function AssessPage() {
       }
 
       const assessmentResult = await scoreResponse.json()
+
+      // Create HubSpot contact with assessment results
+      try {
+        await fetch('/api/hubspot/create-contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: data.email,
+            firstname: data.email.split('@')[0], // Use email prefix as first name if no name provided
+            lastname: '', // Could be enhanced to extract from email or add name fields
+            company: data.company,
+            industry: data.industry,
+            companySize: data.companySize,
+            assessmentResults: {
+              scores: assessmentResult.scores,
+              summary: assessmentResult.recommendation.summary,
+              growthLevers: assessmentResult.recommendation.levers,
+              riskFlags: assessmentResult.recommendation.risks,
+            }
+          }),
+        });
+      } catch (hubspotError) {
+        console.error('HubSpot contact creation failed:', hubspotError);
+        // Don't fail the entire flow if HubSpot fails
+      }
       setResult({
         assessmentId: assessmentId,
         scores: assessmentResult.scores,
