@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     }
 
     // Build contact properties
-    const contactProperties: Record<string, any> = {
+    const contactProperties: Record<string, string> = {
       email,
       ...(firstname && { firstname }),
       ...(lastname && { lastname }),
@@ -69,7 +69,7 @@ Attribution: ${scores.attr}/100
 ${summary ? `Summary: ${summary}` : ''}
 
 ${growthLevers && growthLevers.length > 0 ? `Top Growth Opportunities:
-${growthLevers.slice(0, 3).map((lever: any, i: number) => `${i + 1}. ${lever.name} - ${lever.expectedImpact}`).join('\n')}` : ''}
+${growthLevers.slice(0, 3).map((lever: { name: string; expectedImpact: string }, i: number) => `${i + 1}. ${lever.name} - ${lever.expectedImpact}`).join('\n')}` : ''}
 
 ${riskFlags && riskFlags.length > 0 ? `Risk Areas:
 ${riskFlags.map((risk: string) => `• ${risk}`).join('\n')}` : ''}
@@ -90,9 +90,9 @@ Assessment completed on: ${new Date().toISOString()}`;
         }),
       });
       contactId = created.id;
-    } catch (e: any) {
+    } catch (e: unknown) {
       // If contact exists, PATCH it
-      if (e.message.includes("409")) {
+      if (e instanceof Error && e.message.includes("409")) {
         // Look up by email to get id
         const search = await hs("/crm/v3/objects/contacts/search", {
           method: "POST",
@@ -154,8 +154,9 @@ Assessment completed on: ${new Date().toISOString()}`;
       ...(isUpdated && { updated: true }),
       ...(assessmentData && { engagementNoteCreated: true })
     });
-  } catch (err: any) {
-    console.error("HubSpot create-contact error:", err?.message || err);
-    return NextResponse.json({ error: err?.message || "Unexpected error" }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unexpected error";
+    console.error("HubSpot create-contact error:", errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
