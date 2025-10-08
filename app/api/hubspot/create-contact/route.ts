@@ -6,7 +6,7 @@ async function hs(path: string, init?: RequestInit) {
   const res = await fetch(`${HS}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${process.env.HUBSPOT_TOKEN}`,
+      Authorization: `Bearer ${process.env.HUBSPOT_API_KEY}`,
       "Content-Type": "application/json",
       ...(init?.headers || {}),
     },
@@ -21,8 +21,8 @@ async function hs(path: string, init?: RequestInit) {
 
 export async function POST(req: Request) {
   try {
-    if (!process.env.HUBSPOT_TOKEN) {
-      return NextResponse.json({ error: "HUBSPOT_TOKEN not set" }, { status: 500 });
+    if (!process.env.HUBSPOT_API_KEY) {
+      return NextResponse.json({ error: "HUBSPOT_API_KEY not set" }, { status: 500 });
     }
 
     const body = await req.json();

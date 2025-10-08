@@ -12,19 +12,21 @@ Before deploying, ensure you have:
 
 ## Environment Variables
 
-Required environment variables:
+**Required environment variables:**
 ```env
 DATABASE_URL="postgresql://username:password@host:port/database"
-OPENAI_API_KEY="sk-..."
+OPENAI_API_KEY="sk-..."  # Server-side only
 BASE_URL="https://your-domain.com"
 ```
 
-Optional environment variables:
+**Optional environment variables:**
 ```env
-HUBSPOT_API_KEY="..."
+HUBSPOT_API_KEY="pat-..."  # HubSpot private app token (server-side only)
 HUBSPOT_SOURCE="leadgen-assessment"
-NEXT_PUBLIC_POSTHOG_KEY="phc_..."
+NEXT_PUBLIC_POSTHOG_KEY="phc_..."  # Public analytics key (client-safe)
 ```
+
+**Security Note:** Never commit API keys. All non-public keys are server-side only. See [SECURITY.md](./SECURITY.md) for security best practices.
 
 ## Deployment Options
 
@@ -50,11 +52,15 @@ NEXT_PUBLIC_POSTHOG_KEY="phc_..."
    - Copy the connection string
 
 4. **Set Environment Variables**
-   - In your web service settings, add:
-     - `DATABASE_URL`: Your PostgreSQL connection string
+   - In your web service settings → Environment, add all variables from [ENV_TEMPLATE.md](./ENV_TEMPLATE.md):
+     - `DATABASE_URL`: Automatically set from database connection (or add manually)
      - `OPENAI_API_KEY`: Your OpenAI API key
-     - `BASE_URL`: Your Render app URL
+     - `BASE_URL`: Your Render app URL (e.g., https://leadgen-assessment.onrender.com)
+     - `HUBSPOT_API_KEY`: Your HubSpot private app token (optional)
+     - `NEXT_PUBLIC_POSTHOG_KEY`: Your PostHog key (optional)
      - `NODE_ENV`: `production`
+   
+   **Note:** The `render.yaml` file already configures these variables - you can also use that for automatic setup
 
 5. **Deploy**
    - Click "Create Web Service"

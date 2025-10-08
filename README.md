@@ -48,17 +48,23 @@ npm install
 
 3. Set up environment variables:
 ```bash
-cp .env.example .env
+# Create .env file for local development
+touch .env
 ```
 
-Edit `.env` with your configuration:
+Edit `.env` with your configuration (see [ENV_TEMPLATE.md](./ENV_TEMPLATE.md) for full template):
 ```env
+# Required
 DATABASE_URL="postgresql://username:password@localhost:5432/leadgen_assessment"
 OPENAI_API_KEY="sk-..."
-NEXT_PUBLIC_POSTHOG_KEY="phc_..."
-HUBSPOT_API_KEY="..." # optional
 BASE_URL="http://localhost:3000"
+
+# Optional
+HUBSPOT_API_KEY="pat-..."  # HubSpot private app token
+NEXT_PUBLIC_POSTHOG_KEY="phc_..."  # Analytics (public, safe for client)
 ```
+
+**Security Note**: `.env` files are gitignored and never committed. See [SECURITY.md](./SECURITY.md) for details.
 
 4. Set up the database:
 ```bash
@@ -143,15 +149,17 @@ OpenAI GPT-3.5-turbo is used to generate:
 
 ### Environment Variables
 
-Required:
+**Required:**
 - `DATABASE_URL` - PostgreSQL connection string
-- `OPENAI_API_KEY` - OpenAI API key
+- `OPENAI_API_KEY` - OpenAI API key (server-side only)
 - `BASE_URL` - Application base URL
 
-Optional:
-- `HUBSPOT_API_KEY` - HubSpot API key for CRM integration
-- `NEXT_PUBLIC_POSTHOG_KEY` - PostHog key for analytics
+**Optional:**
+- `HUBSPOT_API_KEY` - HubSpot private app token for CRM integration (server-side only)
+- `NEXT_PUBLIC_POSTHOG_KEY` - PostHog key for analytics (public, client-safe)
 - `HUBSPOT_SOURCE` - Source identifier for HubSpot
+
+**Security:** All sensitive keys are server-side only. See [SECURITY.md](./SECURITY.md) for complete security documentation.
 
 ## Development
 
@@ -189,6 +197,25 @@ npx tsx scripts/render-healthcheck.ts
 ## License
 
 This project is licensed under the MIT License.
+
+## Security
+
+This application follows security best practices for API key management:
+
+- All sensitive credentials are server-side only
+- Environment variables are properly protected
+- No API keys are exposed to clients
+- Automated security validation included
+
+**Run security check:**
+```bash
+npm run security-check
+```
+
+**Documentation:**
+- [SECURITY.md](./SECURITY.md) - Security best practices
+- [SECURITY_AUDIT_REPORT.md](./SECURITY_AUDIT_REPORT.md) - Security audit report
+- [ENV_TEMPLATE.md](./ENV_TEMPLATE.md) - Environment variables template
 
 ## Support
 

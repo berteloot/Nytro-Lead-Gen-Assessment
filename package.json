@@ -7,6 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "security-check": "bash scripts/security-check.sh",
+    "generate-favicon": "node scripts/generate-favicon.js",
     "db:seed": "tsx prisma/seed.ts",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
@@ -37,6 +39,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "prisma-dbml-generator": "^0.12.0",
+    "sharp": "^0.34.4",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
     "typescript": "^5"

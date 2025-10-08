@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <style>
+      .logo { fill: #F86A0E; }
+    </style>
+  </defs>
+  <text x="50" y="70" text-anchor="middle" class="logo" font-family="Arial, sans-serif" font-size="60" font-weight="bold">N</text>
+</svg>
