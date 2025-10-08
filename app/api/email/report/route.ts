@@ -5,6 +5,10 @@ import { pdf } from '@react-pdf/renderer'
 import React from 'react'
 import { AssessmentPdf } from '@/lib/pdf'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const prisma = new PrismaClient()
 
 // Initialize SendGrid
@@ -66,7 +70,12 @@ export async function POST(request: NextRequest) {
     const pdfElement = React.createElement(AssessmentPdf, { assessment: pdfData })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfDoc = await pdf(pdfElement as any)
-    const pdfBuffer = await pdfDoc.toBuffer()
+    const pdfStream = await pdfDoc.toBuffer()
+    
+    // Convert ReadableStream to Buffer
+    const arrayBuffer = await new Response(pdfStream).arrayBuffer()
+    const pdfBuffer = Buffer.from(arrayBuffer)
+    const base64Pdf = pdfBuffer.toString('base64')
 
     // Create email HTML template
     const emailHtml = createEmailTemplate(assessment.user.company || 'Unknown Company', assessment.scoreOverall)
@@ -79,7 +88,7 @@ export async function POST(request: NextRequest) {
       html: emailHtml,
       attachments: [
         {
-          content: Buffer.from(pdfBuffer).toString('base64'),
+          content: base64Pdf,
           filename: `leadgen-assessment-${assessmentId}.pdf`,
           type: 'application/pdf',
           disposition: 'attachment',
