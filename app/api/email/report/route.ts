@@ -89,14 +89,14 @@ export async function POST(request: NextRequest) {
 
     // Generate PDF directly to Buffer
     console.log('Starting PDF generation...');
-    let base64Pdf: string;
+    let pdfBuffer: Buffer;
     try {
       const pdfElement = React.createElement(AssessmentPdf, { assessment: pdfData })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const pdfDoc = await pdf(pdfElement as any)
-      const pdfBuffer = await pdfDoc.toBuffer()
-      base64Pdf = pdfBuffer.toString('base64')
+      pdfBuffer = await pdfDoc.toBuffer()
       console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+      console.log('PDF buffer first 10 bytes:', pdfBuffer.slice(0, 10));
     } catch (pdfError) {
       console.error('PDF generation failed:', pdfError);
       return NextResponse.json(
@@ -104,6 +104,11 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Convert to base64 for email attachment
+    const base64Pdf = pdfBuffer.toString('base64');
+    console.log('Base64 PDF length:', base64Pdf.length);
+    console.log('Base64 starts with:', base64Pdf.substring(0, 20));
 
     // Create email HTML template
     const emailHtml = createEmailTemplate(assessment.user.company || 'Unknown Company', assessment.scoreOverall)
@@ -120,9 +125,14 @@ export async function POST(request: NextRequest) {
           filename: `leadgen-assessment-${assessmentId}.pdf`,
           type: 'application/pdf',
           disposition: 'attachment',
+          content_id: `pdf-${assessmentId}`,
         },
       ],
     }
+
+    console.log('Sending email with attachment...');
+    console.log('Attachment filename:', `leadgen-assessment-${assessmentId}.pdf`);
+    console.log('Attachment size:', base64Pdf.length, 'characters');
 
     await sgMail.send(msg)
 
