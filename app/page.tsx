@@ -21,15 +21,22 @@ export default function HomePage() {
             <span className="text-sm font-semibold text-[#F86A0E] uppercase tracking-wide">Powered by Nytro Marketing</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-[#313C59] mb-6">
-            Lead Generation Assessment &amp; Opportunity Map
+            Discover How Much Pipeline Potential You&apos;re Leaving Untapped
           </h1>
-          <p className="text-xl text-[#313C59] mb-8 max-w-3xl mx-auto">
-            Discover your lead generation gaps and get personalized recommendations 
-            to boost your B2B marketing performance. Complete in 90 seconds.
+          <p className="text-xl text-[#313C59] mb-6 max-w-3xl mx-auto">
+            Get your personalized growth map in 5 minutes. You&apos;ll walk away knowing exactly where to focus your next quarter&apos;s marketing efforts—no guesswork.
           </p>
+          <p className="text-lg text-[#313C59] mb-4 max-w-2xl mx-auto font-medium">
+            Complete our quick assessment to unlock your biggest growth opportunities.
+          </p>
+          <div className="bg-gradient-to-r from-blue-50 to-orange-50 rounded-lg p-4 mb-8 max-w-3xl mx-auto border border-[#F86A0E]/20">
+            <p className="text-[#313C59] font-medium">
+              In minutes, you&apos;ll see how your marketing stack ranks and get 3 quick wins to grow pipeline.
+            </p>
+          </div>
           <Link href="/assess">
             <Button size="lg" className="text-lg px-8 py-4 bg-[#F86A0E] hover:bg-[#e55a0a] text-white">
-              Start Free Assessment
+              Get My Growth Map (5 min)
             </Button>
           </Link>
         </div>
@@ -140,18 +147,53 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Preview Section */}
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold text-[#313C59] mb-8">Here&apos;s What You&apos;ll Get</h2>
+          <div className="bg-white rounded-2xl p-8 shadow-lg border border-[#F86A0E]/20 max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-8 text-left">
+              <div>
+                <h3 className="text-xl font-semibold text-[#313C59] mb-4">📊 Your Growth Map Includes:</h3>
+                <ul className="space-y-3 text-[#313C59]">
+                  <li className="flex items-start">
+                    <span className="text-[#F86A0E] mr-2">✓</span>
+                    <span>Personalized scores across 7 key marketing areas</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-[#F86A0E] mr-2">✓</span>
+                    <span>Top 3 growth opportunities with expected impact</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-[#F86A0E] mr-2">✓</span>
+                    <span>Specific first steps for each opportunity</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-[#F86A0E] mr-2">✓</span>
+                    <span>Downloadable PDF report for your team</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="bg-gradient-to-br from-blue-50 to-orange-50 rounded-lg p-6">
+                <h4 className="font-semibold text-[#313C59] mb-3">Sample Insight:</h4>
+                <p className="text-sm text-gray-700 italic">
+                  &quot;Your content marketing scores 35/100. Adding case studies and ROI calculators could increase lead quality by 40% and reduce sales cycle by 2 weeks.&quot;
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* CTA Section */}
         <div className="text-center bg-white rounded-2xl p-8 shadow-lg border border-[#F86A0E]/20">
           <h2 className="text-2xl font-bold text-[#313C59] mb-4">
-            Ready to Elevate Your Lead Generation?
+            Ready to Unlock Your Growth Potential?
           </h2>
           <p className="text-[#313C59] mb-6">
-            Join hundreds of B2B companies who&apos;ve improved their lead generation 
-            with our assessment tool.
+            Join hundreds of B2B companies who&apos;ve discovered their biggest growth opportunities with our assessment.
           </p>
           <Link href="/assess">
             <Button size="lg" className="text-lg px-8 py-4 bg-[#F86A0E] hover:bg-[#e55a0a] text-white">
-              Start Your Assessment Now
+              Get My Growth Map Now
             </Button>
           </Link>
         </div>

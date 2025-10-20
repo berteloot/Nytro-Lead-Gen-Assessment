@@ -139,6 +139,23 @@ export default function AssessPage() {
         email: data.email
       })
       setStep('results')
+
+      // Send follow-up email after showing results
+      try {
+        await fetch('/api/email/followup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            assessmentId: assessmentId,
+            email: data.email,
+          }),
+        })
+      } catch (followupError) {
+        console.error('Follow-up email failed:', followupError)
+        // Don't fail the flow if follow-up email fails
+      }
     } catch (error) {
       console.error('Assessment error:', error)
       alert('Something went wrong. Please try again.')

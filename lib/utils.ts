@@ -8,8 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 export function formatScore(score: number): string {
   if (score >= 80) return "Excellent"
   if (score >= 60) return "Good"
-  if (score >= 40) return "Fair"
-  return "Needs Improvement"
+  if (score >= 40) return "Growing"
+  return "Ready to Scale"
 }
 
 export function getScoreColor(score: number): string {

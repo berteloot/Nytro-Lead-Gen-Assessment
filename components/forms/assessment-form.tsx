@@ -112,17 +112,30 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
             <span className="text-sm font-semibold text-[#F86A0E] uppercase tracking-wide block text-center">Powered by Nytro Marketing</span>
           </div>
           <CardTitle className="text-[#313C59] text-center">
-            Lead Generation Assessment &amp; Opportunity Map
+            Your Growth Map Assessment
           </CardTitle>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
             <div 
-              className="bg-[#F86A0E] h-2 rounded-full transition-all duration-300"
+              className="bg-[#F86A0E] h-3 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-[#313C59]">
+              Step {currentStep} of {totalSteps}
+            </span>
+            <span className="text-sm text-gray-500">
+              Takes under 5 minutes
+            </span>
+          </div>
           <p className="text-sm text-gray-600">
-            Step {currentStep} of {totalSteps} — aim for 90 seconds. Select what you actually run; we’ll score maturity and surface the top 3 levers.
+            Just tell us what you're already doing. We'll show you your biggest growth opportunities.
           </p>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
+            <p className="text-sm text-green-800 font-medium">
+              🎯 We're already analyzing your responses to find your top 3 growth levers!
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           {currentStep === 1 && (
@@ -292,14 +305,15 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
                 onClick={nextStep}
                 disabled={!isStepValid()}
               >
-                {currentStep === 6 ? 'Get My Results' : 'Next'}
+                {currentStep === 6 ? 'Get My Growth Map' : 'Next'}
               </Button>
             ) : (
               <Button
                 onClick={handleSubmit}
                 disabled={!isStepValid()}
+                className="bg-[#F86A0E] hover:bg-[#e55a0a] text-white"
               >
-                Complete Assessment
+                Get My Growth Map
               </Button>
             )}
           </div>
@@ -320,9 +334,9 @@ function InboundOutboundStep({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold">Inbound & Outbound Marketing</h3>
+        <h3 className="text-lg font-semibold">How do you currently generate leads?</h3>
         <p className="text-sm text-gray-600 mt-2">
-          How you attract prospects to you vs. how you reach out to them directly
+          Check what you&apos;re already doing. Don&apos;t worry if you&apos;re not doing everything—we&apos;ll show you the biggest opportunities.
         </p>
       </div>
       

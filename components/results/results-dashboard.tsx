@@ -86,18 +86,18 @@ export function ResultsDashboard({
             />
             <span className="text-sm font-semibold text-[#F86A0E] uppercase tracking-wide block text-center">Powered by Nytro Marketing</span>
           </div>
-          <CardTitle className="text-2xl text-[#313C59] text-center">Assessment Results</CardTitle>
+          <CardTitle className="text-2xl text-[#313C59] text-center">Your Growth Map</CardTitle>
           <div className="text-sm text-[#313C59] text-center">
             {company} {industry && `• ${industry}`}
           </div>
         </CardHeader>
         <CardContent>
           <div className="text-center">
-            <div className={`inline-flex items-center px-4 py-2 rounded-full text-lg font-semibold ${getScoreColor(scores.overall)}`}>
-              Overall Score: {scores.overall}/100
+            <div className={`inline-flex items-center px-6 py-3 rounded-full text-xl font-bold ${getScoreColor(scores.overall)}`}>
+              Your Growth Potential: {scores.overall}/100
             </div>
-            <p className="text-sm text-gray-600 mt-2">
-              {formatScore(scores.overall)}
+            <p className="text-lg text-gray-700 mt-3 font-medium">
+              {formatScore(scores.overall)} — Here&apos;s where to focus next
             </p>
           </div>
         </CardContent>
@@ -116,7 +116,7 @@ export function ResultsDashboard({
       {/* Score Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle>Score Breakdown</CardTitle>
+          <CardTitle>Your Marketing Maturity Scores</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -182,9 +182,9 @@ export function ResultsDashboard({
       {/* Risk Flags */}
       {riskFlags && riskFlags.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Risk Areas</CardTitle>
-          </CardHeader>
+        <CardHeader>
+          <CardTitle>Areas to Focus On</CardTitle>
+        </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {riskFlags.map((risk, index) => (
@@ -201,30 +201,35 @@ export function ResultsDashboard({
       {/* Action Buttons */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Primary CTA - Book Free Audit */}
+          <div className="mb-6">
+            <Button
+              onClick={onBookAudit}
+              className="w-full text-lg px-8 py-4 bg-[#F86A0E] hover:bg-[#e55a0a] text-white"
+            >
+              Book Free Audit
+            </Button>
+          </div>
+          
+          {/* Secondary CTAs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Button
               onClick={onDownloadPDF}
+              variant="outline"
               className="w-full"
               disabled={isDownloadingPDF}
             >
               {isDownloadingPDF ? (
                 <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   Generating PDF...
                 </span>
               ) : (
-                'Download PDF Report'
+                'View My Growth Map'
               )}
-            </Button>
-            <Button
-              onClick={onBookAudit}
-              variant="outline"
-              className="w-full"
-            >
-              Book Free Audit
             </Button>
             <Button
               onClick={onEmailReport}
