@@ -129,11 +129,11 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
             </span>
           </div>
           <p className="text-sm text-gray-600">
-            Just tell us what you're already doing. We'll show you your biggest growth opportunities.
+            Just tell us what you&apos;re already doing. We&apos;ll show you your biggest growth opportunities.
           </p>
           <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
             <p className="text-sm text-green-800 font-medium">
-              🎯 We're already analyzing your responses to find your top 3 growth levers!
+              🎯 We&apos;re already analyzing your responses to find your top 3 growth levers!
             </p>
           </div>
         </CardHeader>
