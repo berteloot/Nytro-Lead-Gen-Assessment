@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     
     // Check if it's a SendGrid specific error
     if (error && typeof error === 'object' && 'response' in error) {
-      const sgError = error as any;
+      const sgError = error as { response?: { body?: unknown } };
       console.error('SendGrid error response:', sgError.response?.body);
     }
     
