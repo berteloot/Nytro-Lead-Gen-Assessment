@@ -299,15 +299,82 @@ export function computeGapImpact(responses: AssessmentResponses, _scores: Assess
   return gaps.sort((a, b) => b.impact - a.impact);
 }
 
-export function computeConfidence(responses: AssessmentResponses, calibration?: { monthlyLeads: string; meetingRate: string; salesCycle: string }) {
+export function checkPrerequisites(responses: AssessmentResponses): string[] {
+  const risks: string[] = [];
+  
+  // Check for critical infrastructure prerequisites
+  if (!responses.infra?.crm?.present || (responses.infra?.crm?.maturity || 0) < 1) {
+    risks.push('No CRM system in place - this is a prerequisite for most marketing activities');
+  }
+  
+  if (!responses.outbound?.deliverability?.present || (responses.outbound?.deliverability?.maturity || 0) < 1) {
+    risks.push('Email deliverability issues detected - outbound campaigns will have poor performance');
+  }
+  
+  if (!responses.infra?.marketingAutomation?.present || (responses.infra?.marketingAutomation?.maturity || 0) < 1) {
+    risks.push('No marketing automation platform - lead nurturing will be manual and inconsistent');
+  }
+  
+  return risks;
+}
+
+export function computeStructuredGaps(responses: AssessmentResponses, _scores: AssessmentScores) {
+  const leverWeights = {
+    inbound: { seo: 3, leadMagnets: 4, webinars: 3 },
+    outbound: { sequences: 5, deliverability: 6, linkedin: 4, phone: 2 },
+    content: { blog: 2, caseStudies: 5, moFuAssets: 3, boFuAssets: 5, distribution: 2 },
+    paid: { ppc: 4, linkedinLeadGen: 5, retargeting: 4, socialAds: 2, abm: 3 },
+    nurture: { drip: 5, scoringTriggers: 6, intentSignals: 4, reactivation: 3 },
+    infra: { crm: 6, marketingAutomation: 5, enrichment: 3, realtimeSync: 2 },
+    attr: { multiTouch: 6, dashboards: 4, ctaTracking: 3 }
+  };
+
+  const maturityWeights = [0, 0.5, 0.75, 1.0];
+  const structuredGaps: Array<{
+    module: string;
+    lever: string;
+    present: boolean;
+    maturity: number;
+    weight: number;
+    multiplier: number;
+    computedImpact: number;
+  }> = [];
+
+  Object.entries(leverWeights).forEach(([module, levers]) => {
+    Object.entries(levers).forEach(([lever, weight]) => {
+      const moduleResponses = responses[module as keyof AssessmentResponses];
+      if (moduleResponses) {
+        const response = (moduleResponses as Record<string, { present?: boolean; maturity?: number }>)[lever];
+        if (response) {
+          const present = response.present || false;
+          const maturity = response.maturity || 0;
+          const multiplier = maturityWeights[Math.min(maturity, 3)] || 0;
+          const computedImpact = weight * (1 - multiplier);
+          
+          structuredGaps.push({
+            module,
+            lever,
+            present,
+            maturity,
+            weight,
+            multiplier,
+            computedImpact
+          });
+        }
+      }
+    });
+  });
+
+  return structuredGaps.sort((a, b) => b.computedImpact - a.computedImpact);
+}
+
+export function computeConfidence(responses: AssessmentResponses, _calibration?: { monthlyLeads: string; meetingRate: string; salesCycle: string }) {
   let answeredLevers = 0;
-  let totalLevers = 0;
 
   // Count answered levers
   Object.values(responses).forEach(module => {
     if (module) {
       Object.values(module).forEach(lever => {
-        totalLevers++;
         if (lever && typeof lever === 'object' && 'present' in lever && lever.present) {
           answeredLevers++;
         }
@@ -315,11 +382,17 @@ export function computeConfidence(responses: AssessmentResponses, calibration?: 
     }
   });
 
-  const responseDensity = answeredLevers / Math.max(totalLevers, 1);
-  const hasCalibration = calibration && (calibration.monthlyLeads || calibration.meetingRate || calibration.salesCycle);
+  // Check for critical levers with maturity set
+  const hasInfraMaturity = responses.infra?.crm?.maturity !== undefined || 
+                          responses.infra?.marketingAutomation?.maturity !== undefined;
+  const hasAttrMaturity = responses.attr?.multiTouch?.maturity !== undefined || 
+                          responses.attr?.dashboards?.maturity !== undefined;
+  const hasNurtureMaturity = responses.nurture?.drip?.maturity !== undefined || 
+                             responses.nurture?.scoringTriggers?.maturity !== undefined;
   
-  if (responseDensity >= 0.7 && hasCalibration) return 'high';
-  if (responseDensity >= 0.5 || hasCalibration) return 'medium';
+  // New confidence rules based on your specifications
+  if (answeredLevers >= 18 && hasInfraMaturity && hasAttrMaturity && hasNurtureMaturity) return 'high';
+  if (answeredLevers >= 9 && answeredLevers < 18) return 'medium';
   return 'low';
 }
 

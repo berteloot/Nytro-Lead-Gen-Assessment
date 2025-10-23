@@ -13,6 +13,17 @@ export interface RecommendationInput {
   };
   gaps: string[];
   stack: string[];
+  structuredGaps: Array<{
+    module: string;
+    lever: string;
+    present: boolean;
+    maturity: number;
+    weight: number;
+    multiplier: number;
+    computedImpact: number;
+  }>;
+  prerequisites: string[];
+  confidence: 'low' | 'medium' | 'high';
 }
 
 export interface Lever {
@@ -30,35 +41,46 @@ export interface AIRecommendation {
 }
 
 export const recommendationPrompt = (input: RecommendationInput, calibration?: { monthlyLeads: string; meetingRate: string; salesCycle: string }): string => `
-You are a B2B growth strategist for mid-market tech companies. Use ONLY the supplied inputs. No external facts. Be concise and specific.
+You are a B2B growth strategist for mid-market tech companies. Use ONLY the supplied inputs. Do NOT invent metrics, percentages, or tools. Tie each recommendation to a specific lever gap. If inputs are sparse, state that confidence is low.
 
 Company: ${input.company}
 Industry: ${input.industry}
 Scores: ${JSON.stringify(input.scores)}
 Gaps: ${input.gaps.join(", ")}
 Stack: ${input.stack.join(", ")}
+Confidence Level: ${input.confidence}
+Prerequisites: ${input.prerequisites.join(", ")}
+
+Top Gap Analysis (use only these computed values):
+${input.structuredGaps.slice(0, 10).map(gap => 
+  `${gap.module}.${gap.lever}: present=${gap.present}, maturity=${gap.maturity}, impact=${gap.computedImpact.toFixed(1)}`
+).join('\n')}
+
 ${calibration ? `Calibration Data: Monthly Leads: ${calibration.monthlyLeads}, Meeting Rate: ${calibration.meetingRate}, Sales Cycle: ${calibration.salesCycle}` : 'No calibration data provided'}
 
 Return ONLY valid JSON in this exact format:
 {
-  "summary": "string, 120–160 words, exec-ready",
+  "summary": "string, 120–160 words, neutral tone",
   "outcome": "Foundation|Momentum|Optimization",
   "scorecard": {
     "overall": ${input.scores.overall},
     "modules": [
-      {"name": "Inbound Marketing", "score": ${input.scores.inbound}, "top_gaps": ["string", "string"]},
-      {"name": "Outbound Sales", "score": ${input.scores.outbound}, "top_gaps": ["string", "string"]},
-      {"name": "Content Marketing", "score": ${input.scores.content}, "top_gaps": ["string", "string"]},
-      {"name": "Paid Advertising", "score": ${input.scores.paid}, "top_gaps": ["string", "string"]},
-      {"name": "Lead Nurturing", "score": ${input.scores.nurture}, "top_gaps": ["string", "string"]},
-      {"name": "Marketing Infrastructure", "score": ${input.scores.infra}, "top_gaps": ["string", "string"]},
-      {"name": "Attribution & Analytics", "score": ${input.scores.attr}, "top_gaps": ["string", "string"]}
+      {"name": "Inbound Marketing", "score": ${input.scores.inbound}},
+      {"name": "Outbound Sales", "score": ${input.scores.outbound}},
+      {"name": "Content Marketing", "score": ${input.scores.content}},
+      {"name": "Paid Advertising", "score": ${input.scores.paid}},
+      {"name": "Lead Nurturing", "score": ${input.scores.nurture}},
+      {"name": "Marketing Infrastructure", "score": ${input.scores.infra}},
+      {"name": "Attribution & Analytics", "score": ${input.scores.attr}}
     ]
   },
+  "top_gaps": [
+    {"lever": "string", "reason": "string", "impact_score": number}
+  ],
   "quick_wins_30_days": ["string", "string", "string"],
   "60_90_day_priorities": ["string", "string", "string"],
   "risks_if_ignored": ["string", "string"],
-  "recommended_next_step": "string CTA aligned to outcome"
+  "confidence": "${input.confidence}"
 }
 
 CRITICAL GUARDRAILS:

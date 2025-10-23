@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { scoreAssessment, computeGaps, fallbackLeversFromGaps, extractStack } from '@/lib/scoring'
+import { scoreAssessment, computeGaps, fallbackLeversFromGaps, extractStack, computeStructuredGaps, checkPrerequisites, computeConfidence } from '@/lib/scoring'
 import OpenAI from 'openai'
 import { recommendationPrompt, type RecommendationInput } from '@/lib/prompts'
 
@@ -57,12 +57,19 @@ export async function POST(req: Request) {
     if (apiKey) {
       try {
         const client = new OpenAI({ apiKey });
+        const structuredGaps = computeStructuredGaps(body.responses, scores);
+        const prerequisites = checkPrerequisites(body.responses);
+        const confidence = computeConfidence(body.responses, body.calibration);
+        
         recommendation = await getAIRecommendation(client, {
           company: body.company ?? '',
           industry: body.industry ?? '',
           scores,
           gaps: computeGaps(scores),
           stack: extractStack(body.responses),
+          structuredGaps,
+          prerequisites,
+          confidence,
         });
       } catch (e) {
         console.error('OpenAI recommendation failed:', e);
