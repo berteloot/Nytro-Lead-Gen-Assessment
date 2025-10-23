@@ -11,8 +11,10 @@ export const revalidate = 0
 const prisma = new PrismaClient()
 
 async function getAIRecommendation(client: OpenAI, input: RecommendationInput) {
+  const prompt = recommendationPrompt(input);
+  
   const completion = await client.chat.completions.create({
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
@@ -20,7 +22,7 @@ async function getAIRecommendation(client: OpenAI, input: RecommendationInput) {
       },
       {
         role: 'user',
-        content: recommendationPrompt(input),
+        content: prompt,
       },
     ],
     temperature: 0.7,

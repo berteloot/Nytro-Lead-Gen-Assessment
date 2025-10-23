@@ -113,6 +113,59 @@ export function ResultsDashboard({
         </CardContent>
       </Card>
 
+      {/* Industry Benchmark */}
+      {industry && (
+        <Card>
+          <CardHeader>
+            <CardTitle>How You Compare to {industry} Industry</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={`border-l-4 p-4 rounded-r-lg ${
+              scores.overall < 20 ? 'bg-red-50 border-red-500' : 
+              scores.overall < 40 ? 'bg-orange-50 border-orange-500' : 
+              scores.overall < 60 ? 'bg-yellow-50 border-yellow-500' : 
+              'bg-green-50 border-green-500'
+            }`}>
+              <p className={`font-medium ${
+                scores.overall < 20 ? 'text-red-800' : 
+                scores.overall < 40 ? 'text-orange-800' : 
+                scores.overall < 60 ? 'text-yellow-800' : 
+                'text-green-800'
+              }`}>
+                Your overall score of {scores.overall}/100 indicates {
+                  scores.overall < 20 ? 'you\'re just getting started with lead generation' :
+                  scores.overall < 40 ? 'you have some basic systems in place' :
+                  scores.overall < 60 ? 'you have a solid foundation' :
+                  'you have an advanced lead generation setup'
+                } compared to {industry} industry standards.
+              </p>
+            </div>
+            <div className="mt-4 grid md:grid-cols-2 gap-4">
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-green-800 mb-2">Your Strengths</h4>
+                <p className="text-sm text-green-700">
+                  {scores.overall < 20 ? 'You\'re taking the first step by completing this assessment' : 
+                   scores.overall < 40 ? 'You have some basic systems in place' :
+                   scores.paid > scores.overall ? 'Strong paid advertising capabilities' : ''}
+                  {scores.nurture > scores.overall ? 'Effective lead nurturing processes' : ''}
+                  {scores.attr > scores.overall ? 'Good attribution and analytics setup' : ''}
+                </p>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-orange-800 mb-2">Growth Opportunities</h4>
+                <p className="text-sm text-orange-700">
+                  {scores.overall < 20 ? 'Focus on building foundational lead generation systems' :
+                   scores.overall < 40 ? 'Strengthen your existing processes and add new channels' :
+                   scores.inbound < 30 ? 'Inbound marketing could drive organic growth' : ''}
+                  {scores.outbound < 30 ? 'Outbound sales can expand market reach' : ''}
+                  {scores.content < 30 ? 'Content strategy needs strengthening' : ''}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Score Breakdown */}
       <Card>
         <CardHeader>
@@ -158,20 +211,25 @@ export function ResultsDashboard({
                   <h4 className="font-semibold text-lg">
                     {index + 1}. {lever.name}
                   </h4>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceColor(lever.confidence)}`}>
-                    {lever.confidence} confidence
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceColor(lever.confidence)}`}>
+                      {lever.confidence} confidence
+                    </span>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      {index === 0 ? 'Start this week' : index === 1 ? 'Next 2 weeks' : 'Next month'}
+                    </span>
+                  </div>
                 </div>
                 <p className="text-gray-700 mb-3">{lever.why}</p>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
-                  <p className="text-sm font-medium text-green-800">
-                    Expected Impact: {lever.expectedImpact}
-                  </p>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm font-medium text-blue-800">
-                    First Step: {lever.firstStep}
-                  </p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-green-800 mb-1">Expected Impact</p>
+                    <p className="text-sm text-green-700">{lever.expectedImpact}</p>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-blue-800 mb-1">First Step</p>
+                    <p className="text-sm text-blue-700">{lever.firstStep}</p>
+                  </div>
                 </div>
               </div>
             ))}

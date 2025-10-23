@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
 
     // Check if SendGrid is configured
     console.log('SendGrid API Key exists:', !!process.env.SENDGRID_API_KEY);
-    console.log('SendGrid API Key length:', process.env.SENDGRID_API_KEY?.length || 0);
     console.log('From Email:', process.env.FROM_EMAIL);
     
     if (!process.env.SENDGRID_API_KEY) {

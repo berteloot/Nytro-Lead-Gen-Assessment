@@ -67,6 +67,9 @@ export interface AssessmentScores {
 }
 
 export function scoreAssessment(responses: AssessmentResponses): AssessmentScores {
+  // Debug logging
+  console.log('Scoring responses:', JSON.stringify(responses, null, 2));
+  
   const weights = { 
     inbound: 20,      // Increased - includes events and inbound activities
     outbound: 18,     // Increased - more important in competitive markets
@@ -77,87 +80,65 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
     attr: 8           // Important but not as weighted
   };
 
-  const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number }> = {}, leverWeights: Record<string, number>) => {
+  const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number }> = {}, leverWeights: Record<string, number>, moduleName: string) => {
+    console.log(`Scoring ${moduleName}:`, answers);
     let s = 0, max = 0;
     for (const k of Object.keys(leverWeights)) {
       const w = leverWeights[k] ?? 0;
       const present = answers?.[k]?.present ? 1 : 0;
       const maturityRaw = answers?.[k]?.maturity;
       const maturity = typeof maturityRaw === 'number' ? maturityRaw : 0; // 0..5
-      s += present * (Math.min(Math.max(maturity, 0), 5) / 5) * w;
+      const score = present * (Math.min(Math.max(maturity, 0), 5) / 5) * w;
+      s += score;
       max += w;
+      console.log(`  ${k}: present=${present}, maturity=${maturity}, weight=${w}, score=${score}`);
     }
-    return Math.round((s / Math.max(max, 1)) * 100);
+    const finalScore = Math.round((s / Math.max(max, 1)) * 100);
+    console.log(`${moduleName} final score: ${finalScore}`);
+    return finalScore;
   };
 
   const inbound = moduleScore(responses.inbound, { 
-    seo: 3,           // Critical for organic growth
-    leadMagnets: 3,   // Essential for lead capture
-    webinars: 2,      // High-value content marketing
-    retargetedContent: 2,
-    employeeAdvocacy: 2 // Extends organic reach
-  });
-
-  // Include events data in inbound scoring
-  const eventsData = responses.events || {};
-  const eventsScore = moduleScore(eventsData, { 
-    tradeShows: 3,    // Major B2B lead generation channel
-    conferences: 3,   // Thought leadership and networking
-    sponsorships: 1,  // More brand than lead gen
-    leadCapture: 3,   // Critical - systematic lead capture
-    preBookedMeetings: 2, // High value - pre-qualified meetings
-    followup: 2       // Important - post-event nurture
-  });
-
-  // Combine inbound and events scores
-  const combinedInbound = Math.round((inbound + eventsScore) / 2);
+    seo: 4,           // SEO & Content Marketing
+    leadMagnets: 3,   // Lead Magnets
+    webinars: 3       // Webinars & Events
+  }, 'inbound');
 
   const outbound = moduleScore(responses.outbound, { 
-    sequences: 4,     // Increased - core outbound capability
-    linkedin: 3,      // Increased - primary B2B channel
-    phone: 2,         // Increased - still valuable for enterprise
-    deliverability: 3 // Increased - critical for email success
-  });
+    sequences: 4,     // Core outbound capability
+    linkedin: 3,      // Primary B2B channel
+    phone: 3          // Still valuable for enterprise
+  }, 'outbound');
 
-  const content = moduleScore(responses.content, { 
-    blog: 3,          // Increased - thought leadership
-    caseStudies: 4,   // Increased - social proof is crucial
-    moFuAssets: 3,    // Increased - mid-funnel conversion
-    boFuAssets: 2,    // Decreased - less critical than MoFu
-    distribution: 3   // Increased - content without distribution is wasted
-  });
+  // Content is now part of inbound (SEO & Content Marketing)
+  const content = Math.round(inbound * 0.8); // Derive content score from inbound
 
   const paid = moduleScore(responses.paid, { 
-    ppc: 4,           // Increased - high-intent traffic
-    socialAds: 3,     // Increased - brand awareness + lead gen
-    retargeting: 3,   // Increased - high ROI channel
-    abm: 4,           // Increased - critical for enterprise
-    linkedinLeadGen: 3 // New - native LinkedIn lead gen forms
-  });
+    ppc: 4,           // High-intent traffic
+    socialAds: 3,     // Brand awareness + lead gen
+    retargeting: 3    // High ROI channel
+  }, 'paid');
 
   const nurture = moduleScore(responses.nurture, { 
-    drip: 4,          // Increased - essential for lead conversion
-    reactivation: 3,  // Increased - reactivating cold leads
+    drip: 4,          // Essential for lead conversion
     scoringTriggers: 3, 
-    intentSignals: 3  // Increased - buying signals are gold
-  });
+    intentSignals: 3  // Buying signals are gold
+  }, 'nurture');
 
   const infra = moduleScore(responses.infra, { 
-    crm: 3,           // Increased - single source of truth
-    marketingAutomation: 4, // Increased - efficiency multiplier
-    enrichment: 3,    // Increased - better data = better targeting
+    crm: 3,           // Single source of truth
+    enrichment: 3,       // Better data = better targeting
     realtimeSync: 3 
-  });
+  }, 'infra');
 
   const attr = moduleScore(responses.attr, { 
     multiTouch: 4,    // Critical for understanding customer journey
-    dashboards: 3, 
-    ctaTracking: 3 
-  });
+    dashboards: 3
+  }, 'attr');
 
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
   const overall = Math.round(
-    (combinedInbound * weights.inbound + 
+    (inbound * weights.inbound + 
      outbound * weights.outbound + 
      content * weights.content +
      paid * weights.paid + 
@@ -167,7 +148,7 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   );
 
   return {
-    inbound: combinedInbound,
+    inbound,
     outbound,
     content,
     paid,

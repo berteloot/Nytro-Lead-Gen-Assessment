@@ -23,7 +23,6 @@ export async function POST(req: Request) {
   try {
     console.log('=== HubSpot Create Contact Called ===');
     console.log('HubSpot API Key exists:', !!process.env.HUBSPOT_API_KEY);
-    console.log('HubSpot API Key length:', process.env.HUBSPOT_API_KEY?.length || 0);
     
     if (!process.env.HUBSPOT_API_KEY) {
       console.error('HUBSPOT_API_KEY is not configured');
