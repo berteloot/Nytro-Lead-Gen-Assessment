@@ -383,7 +383,13 @@ function CompanyStep({
 }: { 
   responses: AssessmentResponses
   onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number }) => void
-  formData: Record<string, string>
+  formData: {
+    email: string;
+    company: string;
+    industry: string;
+    companySize: string;
+    responses: AssessmentResponses;
+  }
   updateFormData: (field: string, value: string) => void
   emailError: string
 }) {
