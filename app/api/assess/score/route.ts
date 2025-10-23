@@ -45,6 +45,9 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Invalid payload: responses missing' }, { status: 400 });
     }
 
+    // Debug: Log the responses being scored
+    console.log('Assessment responses received:', JSON.stringify(body.responses, null, 2));
+    
     const scores = scoreAssessment(body.responses);
 
     // Lazy construct client only if a key exists at REQUEST time

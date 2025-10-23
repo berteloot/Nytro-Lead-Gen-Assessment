@@ -62,6 +62,14 @@ export interface AssessmentScores {
 export function scoreAssessment(responses: AssessmentResponses): AssessmentScores {
   // Debug logging
   console.log('Scoring responses:', JSON.stringify(responses, null, 2));
+  console.log('Response structure check:');
+  console.log('- inbound:', responses.inbound);
+  console.log('- outbound:', responses.outbound);
+  console.log('- content:', responses.content);
+  console.log('- paid:', responses.paid);
+  console.log('- nurture:', responses.nurture);
+  console.log('- infra:', responses.infra);
+  console.log('- attr:', responses.attr);
   
   // Maturity Scale Definitions:
   // 0: Not present/planned
