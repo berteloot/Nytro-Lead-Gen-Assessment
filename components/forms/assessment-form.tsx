@@ -563,12 +563,12 @@ function SimpleQuestion({
 }) {
   const handlePresentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const present = e.target.checked;
-    onChange({ present, applicable: present ? true : (value?.applicable ?? true) });
+    onChange({ present, applicable: true });
   };
 
   const handleApplicableChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const applicable = !e.target.checked;
-    onChange({ present: applicable ? false : (value?.present ?? false), applicable });
+    onChange({ present: false, applicable });
   };
 
 
