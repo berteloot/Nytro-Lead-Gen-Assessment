@@ -75,6 +75,11 @@ Guidelines:
 - Be honest about their current maturity level: if overall score is 0-20, acknowledge they're starting from the beginning; if 20-40, they have some basics in place; if 40+, they have a solid foundation.
 - Don't claim they have a "strong foundation" or "promising maturity" if their overall score is below 30.
 - For very low scores (0-15), focus on foundational recommendations rather than advanced strategies.
+- Prioritize levers with highest ROI-to-effort ratio.
+- Consider interdependencies (e.g., content fuels both inbound and nurture).
+- Flag if foundational infra is missing before recommending advanced tactics.
+- If overall < 20: Focus ONLY on foundational capabilities (CRM, basic content, one channel).
+- If overall < 30: Add "Start here: [foundational step]" before advanced recommendations.
 `;
 
 export const summaryPrompt = (input: RecommendationInput): string => `
@@ -124,7 +129,7 @@ Example: "You've already built a strong foundation—let's turn ${topLever.toLow
 `;
 
 export const industryBenchmarkPrompt = (input: RecommendationInput): string => `
-You are a B2B marketing analyst with deep knowledge of ${input.industry} industry benchmarks and best practices.
+You are a B2B marketing analyst with deep knowledge of ${input.industry} industry best practices.
 Provide industry-specific context and competitive insights for this company's assessment.
 
 Company: ${input.company}
@@ -134,16 +139,17 @@ Current Stack: ${input.stack.join(", ")}
 
 Return ONLY valid JSON in this exact format:
 {
-  "industryBenchmark": "How their overall score compares to typical ${input.industry} companies (e.g., 'Your 8/100 score is below the 35/100 industry average for ${input.industry} companies')",
+  "industryBenchmark": "How their overall score compares to typical ${input.industry} companies (e.g., 'Your 8/100 score indicates early-stage development, which is common for ${input.industry} startups')",
   "competitiveAdvantage": "What they're doing well compared to industry peers",
   "marketOpportunity": "Specific ${input.industry} market trends they could leverage",
   "implementationTimeline": "Realistic timeline for implementing recommendations in ${input.industry} context"
 }
 
 Guidelines:
-- Use specific ${input.industry} benchmarks and examples
+- Use directional comparisons rather than specific numbers (e.g., "early-stage" vs "growth-stage")
 - Reference industry buying cycles and decision-making processes
 - Include relevant market trends and opportunities
 - Keep each field under 50 words
 - Be encouraging but realistic about industry challenges
+- Focus on maturity levels rather than exact benchmarks
 `;

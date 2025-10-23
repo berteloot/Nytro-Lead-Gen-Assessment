@@ -70,14 +70,21 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   // Debug logging
   console.log('Scoring responses:', JSON.stringify(responses, null, 2));
   
+  // Maturity Scale Definitions:
+  // 0: Not present/planned
+  // 1: Ad-hoc/inconsistent
+  // 2: Defined process, inconsistent execution
+  // 3: Consistent execution, some optimization
+  // 4: Well-optimized, data-driven
+  // 5: Best-in-class, continuously improving
+  
   const weights = { 
-    inbound: 20,      // Increased - includes events and inbound activities
-    outbound: 18,     // Increased - more important in competitive markets
-    content: 18,      // Increased - content marketing is foundational
-    paid: 18,         // Increased - paid acquisition is more critical
-    nurture: 20,      // Increased - conversion is where money is made
-    infra: 8,         // Important but not as weighted
-    attr: 8           // Important but not as weighted
+    inbound: 25,      // Includes events + SEO + lead gen
+    outbound: 20,     // Critical for competitive markets
+    paid: 20,         // Paid acquisition is essential
+    nurture: 20,      // Conversion optimization
+    infra: 8,         // Foundation but not weighted as heavily
+    attr: 7           // Important for optimization
   };
 
   const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number }> = {}, leverWeights: Record<string, number>, moduleName: string) => {
@@ -88,6 +95,12 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
       const present = answers?.[k]?.present ? 1 : 0;
       const maturityRaw = answers?.[k]?.maturity;
       const maturity = typeof maturityRaw === 'number' ? maturityRaw : 0; // 0..5
+      
+      // Validation: warn if present=true but maturity=0
+      if (present && maturity === 0) {
+        console.warn(`${moduleName}.${k}: marked present but maturity is 0`);
+      }
+      
       const score = present * (Math.min(Math.max(maturity, 0), 5) / 5) * w;
       s += score;
       max += w;
@@ -98,49 +111,67 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
     return finalScore;
   };
 
-  const inbound = moduleScore(responses.inbound, { 
+  // Include events in inbound scoring
+  const inbound = moduleScore({
+    ...responses.inbound,
+    ...responses.events
+  }, { 
     seo: 4,           // SEO & Content Marketing
     leadMagnets: 3,   // Lead Magnets
-    webinars: 3       // Webinars & Events
+    webinars: 3,      // Webinars & Events
+    tradeShows: 2,    // Events & Trade Shows
+    conferences: 2,   // Conference Marketing
+    sponsorships: 2   // Event Sponsorships
   }, 'inbound');
 
   const outbound = moduleScore(responses.outbound, { 
-    sequences: 4,     // Core outbound capability
+    sequences: 5,     // Core outbound capability
+    deliverability: 4, // Critical for sequences to work
     linkedin: 3,      // Primary B2B channel
-    phone: 3          // Still valuable for enterprise
+    phone: 2          // Lower importance in 2025
   }, 'outbound');
 
-  // Content is now part of inbound (SEO & Content Marketing)
-  const content = Math.round(inbound * 0.8); // Derive content score from inbound
+  // Score content independently using actual content responses
+  const content = moduleScore(responses.content, {
+    blog: 3,          // Content foundation
+    caseStudies: 4,   // High-value content
+    moFuAssets: 3,    // Middle-of-funnel content
+    boFuAssets: 3,    // Bottom-of-funnel content
+    distribution: 2   // Content distribution
+  }, 'content');
 
   const paid = moduleScore(responses.paid, { 
     ppc: 4,           // High-intent traffic
-    socialAds: 3,     // Brand awareness + lead gen
-    retargeting: 3    // High ROI channel
+    linkedinLeadGen: 4, // Critical for B2B
+    retargeting: 3,   // High ROI channel
+    socialAds: 2,     // Brand awareness + lead gen
+    abm: 2           // Account-based marketing
   }, 'paid');
 
   const nurture = moduleScore(responses.nurture, { 
     drip: 4,          // Essential for lead conversion
-    scoringTriggers: 3, 
-    intentSignals: 3  // Buying signals are gold
+    scoringTriggers: 4, // Critical for lead qualification
+    intentSignals: 3,  // Buying signals are gold
+    reactivation: 2   // Re-engaging cold leads
   }, 'nurture');
 
   const infra = moduleScore(responses.infra, { 
-    crm: 3,           // Single source of truth
-    enrichment: 3,       // Better data = better targeting
-    realtimeSync: 3 
+    crm: 4,           // Single source of truth
+    marketingAutomation: 4, // Essential for scaling
+    enrichment: 3,    // Better data = better targeting
+    realtimeSync: 2   // Nice to have
   }, 'infra');
 
   const attr = moduleScore(responses.attr, { 
     multiTouch: 4,    // Critical for understanding customer journey
-    dashboards: 3
+    dashboards: 3,    // Data visibility
+    ctaTracking: 2    // Conversion optimization
   }, 'attr');
 
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
   const overall = Math.round(
     (inbound * weights.inbound + 
      outbound * weights.outbound + 
-     content * weights.content +
      paid * weights.paid + 
      nurture * weights.nurture + 
      infra * weights.infra + 
@@ -150,7 +181,7 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   return {
     inbound,
     outbound,
-    content,
+    content, // Keep for display but not in overall calculation
     paid,
     nurture,
     infra,
