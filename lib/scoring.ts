@@ -327,6 +327,30 @@ export function fallbackLeversFromGaps(scores: AssessmentScores, responses: Asse
   const gaps = computeGapImpact(responses, scores);
   const confidence = computeConfidence(responses, calibration);
   
+  console.log('Computing growth levers from gaps:', gaps.length, 'gaps found');
+  
+  // If no gaps found, return default recommendations based on lowest scores
+  if (gaps.length === 0) {
+    console.log('No gaps found, using default recommendations based on scores');
+    const sortedModules = [
+      { module: 'inbound', score: scores.inbound },
+      { module: 'outbound', score: scores.outbound },
+      { module: 'content', score: scores.content },
+      { module: 'paid', score: scores.paid },
+      { module: 'nurture', score: scores.nurture },
+      { module: 'infra', score: scores.infra },
+      { module: 'attr', score: scores.attr }
+    ].sort((a, b) => a.score - b.score);
+    
+    return sortedModules.slice(0, 3).map(item => ({
+      name: getModuleDisplayName(item.module),
+      why: `Your current score in this area (${item.score}/100) indicates significant room for improvement.`,
+      expectedImpact: 'High - Building foundational capabilities will create compound growth',
+      confidence: confidence as 'low' | 'medium' | 'high',
+      firstStep: `Start by implementing basic ${getModuleDisplayName(item.module).toLowerCase()} processes.`
+    }));
+  }
+  
   return gaps.slice(0, 3).map(gap => {
     const impactPercent = Math.round((gap.impact / 6) * 100); // Normalize to percentage
     return {
@@ -339,7 +363,6 @@ export function fallbackLeversFromGaps(scores: AssessmentScores, responses: Asse
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getModuleDisplayName(module: string): string {
   const names: Record<string, string> = {
     inbound: 'Inbound Marketing',
