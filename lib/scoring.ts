@@ -1,47 +1,50 @@
 // type Module = "inbound" | "outbound" | "content" | "paid" | "nurture" | "infra" | "attr";
 
+// LeverValue type for individual lever responses
+export type LeverValue = { present: boolean; maturity: number | null; applicable: boolean };
+
 export interface AssessmentResponses {
   inbound: {
-    seo?: { present: boolean; maturity: number | null; applicable: boolean };
-    leadMagnets?: { present: boolean; maturity: number | null; applicable: boolean };
-    webinars?: { present: boolean; maturity: number | null; applicable: boolean };
+    seo?: LeverValue;
+    leadMagnets?: LeverValue;
+    webinars?: LeverValue;
   };
   outbound: {
-    sequences?: { present: boolean; maturity: number | null; applicable: boolean };
-    linkedin?: { present: boolean; maturity: number | null; applicable: boolean };
-    phone?: { present: boolean; maturity: number | null; applicable: boolean };
-    deliverability?: { present: boolean; maturity: number | null; applicable: boolean };
+    sequences?: LeverValue;
+    linkedin?: LeverValue;
+    phone?: LeverValue;
+    deliverability?: LeverValue;
   };
   content: {
-    blog?: { present: boolean; maturity: number | null; applicable: boolean };
-    caseStudies?: { present: boolean; maturity: number | null; applicable: boolean };
-    moFuAssets?: { present: boolean; maturity: number | null; applicable: boolean };
-    boFuAssets?: { present: boolean; maturity: number | null; applicable: boolean };
-    distribution?: { present: boolean; maturity: number | null; applicable: boolean };
+    blog?: LeverValue;
+    caseStudies?: LeverValue;
+    moFuAssets?: LeverValue;
+    boFuAssets?: LeverValue;
+    distribution?: LeverValue;
   };
   paid: {
-    ppc?: { present: boolean; maturity: number | null; applicable: boolean };
-    socialAds?: { present: boolean; maturity: number | null; applicable: boolean };
-    retargeting?: { present: boolean; maturity: number | null; applicable: boolean };
-    abm?: { present: boolean; maturity: number | null; applicable: boolean };
-    linkedinLeadGen?: { present: boolean; maturity: number | null; applicable: boolean };
+    ppc?: LeverValue;
+    socialAds?: LeverValue;
+    retargeting?: LeverValue;
+    abm?: LeverValue;
+    linkedinLeadGen?: LeverValue;
   };
   nurture: {
-    drip?: { present: boolean; maturity: number | null; applicable: boolean };
-    reactivation?: { present: boolean; maturity: number | null; applicable: boolean };
-    scoringTriggers?: { present: boolean; maturity: number | null; applicable: boolean };
-    intentSignals?: { present: boolean; maturity: number | null; applicable: boolean };
+    drip?: LeverValue;
+    reactivation?: LeverValue;
+    scoringTriggers?: LeverValue;
+    intentSignals?: LeverValue;
   };
   infra: {
-    crm?: { present: boolean; maturity: number | null; applicable: boolean };
-    marketingAutomation?: { present: boolean; maturity: number | null; applicable: boolean };
-    enrichment?: { present: boolean; maturity: number | null; applicable: boolean };
-    realtimeSync?: { present: boolean; maturity: number | null; applicable: boolean };
+    crm?: LeverValue;
+    marketingAutomation?: LeverValue;
+    enrichment?: LeverValue;
+    realtimeSync?: LeverValue;
   };
   attr: {
-    multiTouch?: { present: boolean; maturity: number | null; applicable: boolean };
-    dashboards?: { present: boolean; maturity: number | null; applicable: boolean };
-    ctaTracking?: { present: boolean; maturity: number | null; applicable: boolean };
+    multiTouch?: LeverValue;
+    dashboards?: LeverValue;
+    ctaTracking?: LeverValue;
   };
 }
 
@@ -89,100 +92,66 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
     attr: 5           // Important for optimization
   };
 
-  // Maturity weight multipliers: 0=not in place, 1=basic, 2=consistent, 3=advanced
-  const maturityWeights = [0, 0.5, 0.75, 1.0];
-  
-  const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number | null; applicable?: boolean }> = {}, leverWeights: Record<string, number>, moduleName: string) => {
-    console.log(`Scoring ${moduleName}:`, answers);
-    
-    // Filter to applicable levers only
-    const applicableLevers = Object.entries(leverWeights).filter(([k, w]) => {
-      const response = answers?.[k];
-      return response?.applicable !== false;
-    });
-    
-    if (applicableLevers.length === 0) {
-      console.log(`${moduleName}: no applicable levers, skipping`);
-      return null; // Skip module if no applicable levers
-    }
-    
-    // Calculate denominator (sum of applicable weights)
-    const denominator = applicableLevers.reduce((sum, [k, w]) => sum + w, 0);
-    
-    // Calculate numerator (sum of weighted maturity scores)
-    const numerator = applicableLevers.reduce((sum, [k, w]) => {
-      const response = answers?.[k];
-      const present = response?.present ? 1 : 0;
-      const maturity = response?.maturity ?? 0;
-      
-      // Only score if present and maturity is set (not null)
-      if (present && maturity !== null && maturity > 0) {
-        const maturityMultiplier = maturityWeights[Math.min(maturity, 3)] || 0;
-        const score = maturityMultiplier * w;
-        console.log(`  ${k}: present=${present}, maturity=${maturity}, multiplier=${maturityMultiplier}, weight=${w}, score=${score}`);
-        return sum + score;
-      } else if (present && maturity === null) {
-        console.warn(`${moduleName}.${k}: marked present but maturity not set`);
-      }
-      return sum;
-    }, 0);
-    
-    // Normalize against applicable weights only
-    const finalScore = denominator > 0 ? Math.round((numerator / denominator) * 100) : 0;
-    console.log(`${moduleName} final score: ${finalScore} (applicable weight: ${denominator})`);
-    return finalScore;
+  const m: {[key: number]: number} = {0: 0, 1: 0.5, 2: 0.75, 3: 1};
+
+  const moduleScore = (levers: {weight: number; maturity: number|null; applicable: boolean}[]) => {
+    const denom = levers.filter(l => l.applicable).reduce((s,l) => s + l.weight, 0);
+    const numer = levers
+      .filter(l => l.applicable)
+      .reduce((s,l) => s + l.weight * m[l.maturity ?? 0], 0);
+    return denom ? Math.round(100 * numer / denom) : null;
   };
 
   // Score inbound marketing with pipeline impact weights
-  const inbound = moduleScore(responses.inbound, { 
-    seo: 3,           // SEO & Content Marketing (medium impact)
-    leadMagnets: 4,   // Lead capture (high impact)
-    webinars: 3       // Webinars & Events (medium impact)
-  }, 'inbound');
+  const inbound = moduleScore([
+    { weight: 3, maturity: responses.inbound?.seo?.maturity ?? 0, applicable: responses.inbound?.seo?.applicable !== false },
+    { weight: 4, maturity: responses.inbound?.leadMagnets?.maturity ?? 0, applicable: responses.inbound?.leadMagnets?.applicable !== false },
+    { weight: 3, maturity: responses.inbound?.webinars?.maturity ?? 0, applicable: responses.inbound?.webinars?.applicable !== false }
+  ]);
 
-  const outbound = moduleScore(responses.outbound, { 
-    sequences: 5,     // Core outbound capability (high impact)
-    deliverability: 6, // Critical prerequisite (highest impact)
-    linkedin: 4,      // Primary B2B channel (high impact)
-    phone: 2          // Lower importance in 2025 (low impact)
-  }, 'outbound');
+  const outbound = moduleScore([
+    { weight: 5, maturity: responses.outbound?.sequences?.maturity ?? 0, applicable: responses.outbound?.sequences?.applicable !== false },
+    { weight: 6, maturity: responses.outbound?.deliverability?.maturity ?? 0, applicable: responses.outbound?.deliverability?.applicable !== false },
+    { weight: 4, maturity: responses.outbound?.linkedin?.maturity ?? 0, applicable: responses.outbound?.linkedin?.applicable !== false },
+    { weight: 2, maturity: responses.outbound?.phone?.maturity ?? 0, applicable: responses.outbound?.phone?.applicable !== false }
+  ]);
 
   // Score content with pipeline impact weights
-  const content = moduleScore(responses.content, {
-    blog: 2,          // Content foundation (low impact)
-    caseStudies: 5,   // BOFU content (high impact)
-    moFuAssets: 3,    // Middle-of-funnel content (medium impact)
-    boFuAssets: 5,    // Bottom-of-funnel content (high impact)
-    distribution: 2   // Content distribution (low impact)
-  }, 'content');
+  const content = moduleScore([
+    { weight: 2, maturity: responses.content?.blog?.maturity ?? 0, applicable: responses.content?.blog?.applicable !== false },
+    { weight: 5, maturity: responses.content?.caseStudies?.maturity ?? 0, applicable: responses.content?.caseStudies?.applicable !== false },
+    { weight: 3, maturity: responses.content?.moFuAssets?.maturity ?? 0, applicable: responses.content?.moFuAssets?.applicable !== false },
+    { weight: 5, maturity: responses.content?.boFuAssets?.maturity ?? 0, applicable: responses.content?.boFuAssets?.applicable !== false },
+    { weight: 2, maturity: responses.content?.distribution?.maturity ?? 0, applicable: responses.content?.distribution?.applicable !== false }
+  ]);
 
-  const paid = moduleScore(responses.paid, { 
-    ppc: 4,           // High-intent traffic (high impact)
-    linkedinLeadGen: 5, // Critical for B2B (high impact)
-    retargeting: 4,   // High ROI channel (high impact)
-    socialAds: 2,     // Brand awareness (low impact)
-    abm: 3           // Account-based marketing (medium impact)
-  }, 'paid');
+  const paid = moduleScore([
+    { weight: 4, maturity: responses.paid?.ppc?.maturity ?? 0, applicable: responses.paid?.ppc?.applicable !== false },
+    { weight: 5, maturity: responses.paid?.linkedinLeadGen?.maturity ?? 0, applicable: responses.paid?.linkedinLeadGen?.applicable !== false },
+    { weight: 4, maturity: responses.paid?.retargeting?.maturity ?? 0, applicable: responses.paid?.retargeting?.applicable !== false },
+    { weight: 2, maturity: responses.paid?.socialAds?.maturity ?? 0, applicable: responses.paid?.socialAds?.applicable !== false },
+    { weight: 3, maturity: responses.paid?.abm?.maturity ?? 0, applicable: responses.paid?.abm?.applicable !== false }
+  ]);
 
-  const nurture = moduleScore(responses.nurture, { 
-    drip: 5,          // Essential for lead conversion (high impact)
-    scoringTriggers: 6, // Critical for lead qualification (highest impact)
-    intentSignals: 4,  // Buying signals (high impact)
-    reactivation: 3   // Re-engaging cold leads (medium impact)
-  }, 'nurture');
+  const nurture = moduleScore([
+    { weight: 5, maturity: responses.nurture?.drip?.maturity ?? 0, applicable: responses.nurture?.drip?.applicable !== false },
+    { weight: 6, maturity: responses.nurture?.scoringTriggers?.maturity ?? 0, applicable: responses.nurture?.scoringTriggers?.applicable !== false },
+    { weight: 4, maturity: responses.nurture?.intentSignals?.maturity ?? 0, applicable: responses.nurture?.intentSignals?.applicable !== false },
+    { weight: 3, maturity: responses.nurture?.reactivation?.maturity ?? 0, applicable: responses.nurture?.reactivation?.applicable !== false }
+  ]);
 
-  const infra = moduleScore(responses.infra, { 
-    crm: 6,           // Single source of truth (highest impact)
-    marketingAutomation: 5, // Essential for scaling (high impact)
-    enrichment: 3,    // Better data (medium impact)
-    realtimeSync: 2   // Nice to have (low impact)
-  }, 'infra');
+  const infra = moduleScore([
+    { weight: 6, maturity: responses.infra?.crm?.maturity ?? 0, applicable: responses.infra?.crm?.applicable !== false },
+    { weight: 5, maturity: responses.infra?.marketingAutomation?.maturity ?? 0, applicable: responses.infra?.marketingAutomation?.applicable !== false },
+    { weight: 3, maturity: responses.infra?.enrichment?.maturity ?? 0, applicable: responses.infra?.enrichment?.applicable !== false },
+    { weight: 2, maturity: responses.infra?.realtimeSync?.maturity ?? 0, applicable: responses.infra?.realtimeSync?.applicable !== false }
+  ]);
 
-  const attr = moduleScore(responses.attr, { 
-    multiTouch: 6,    // Critical for understanding customer journey (highest impact)
-    dashboards: 4,    // Data visibility (high impact)
-    ctaTracking: 3    // Conversion optimization (medium impact)
-  }, 'attr');
+  const attr = moduleScore([
+    { weight: 6, maturity: responses.attr?.multiTouch?.maturity ?? 0, applicable: responses.attr?.multiTouch?.applicable !== false },
+    { weight: 4, maturity: responses.attr?.dashboards?.maturity ?? 0, applicable: responses.attr?.dashboards?.applicable !== false },
+    { weight: 3, maturity: responses.attr?.ctaTracking?.maturity ?? 0, applicable: responses.attr?.ctaTracking?.applicable !== false }
+  ]);
 
   // Calculate overall score as weighted average of applicable modules only
   const moduleScores = [

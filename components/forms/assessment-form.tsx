@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { calculateProgress, validateEmail } from '@/lib/utils'
-import { type AssessmentResponses } from '@/lib/scoring'
+import { type AssessmentResponses, type LeverValue } from '@/lib/scoring'
 
 interface AssessmentFormProps {
   onComplete: (data: {
@@ -59,7 +59,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
     }
   }
 
-  const updateResponses = (module: string, lever: string, data: { present: boolean; maturity: number | null; applicable: boolean }) => {
+  const updateResponses = (module: string, lever: string, data: LeverValue) => {
     setFormData(prev => ({
       ...prev,
       responses: {
@@ -103,22 +103,9 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
     }
   }
 
-  const hasIncompleteResponses = () => {
-    // Check if any present lever has null maturity
-    for (const responseModule of Object.values(formData.responses)) {
-      if (responseModule) {
-        for (const lever of Object.values(responseModule)) {
-          if (lever && typeof lever === 'object' && 'present' in lever && 'maturity' in lever) {
-            const typedLever = lever as { present: boolean; maturity: number | null; applicable: boolean };
-            if (typedLever.present && typedLever.maturity === null) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-    return false;
-  }
+  const hasIncomplete = Object.values(formData.responses).some(mod =>
+    Object.values(mod || {}).some((l: any) => l.present && l.maturity == null)
+  );
 
   const progress = calculateProgress(currentStep, totalSteps)
 
@@ -213,10 +200,10 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={!isStepValid() || hasIncompleteResponses()}
+                disabled={!isStepValid() || hasIncomplete}
                 className="bg-[#F86A0E] hover:bg-[#e55a0a] text-white"
               >
-                {hasIncompleteResponses() ? 'Please complete all maturity selections' : 'Get My Health Check'}
+                {hasIncomplete ? 'Please complete all maturity selections' : 'Get My Health Check'}
               </Button>
             )}
           </div>
@@ -232,7 +219,7 @@ function LeadGenStep({
   onUpdate 
 }: { 
   responses: AssessmentResponses
-  onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number | null; applicable: boolean }) => void 
+  onUpdate: (module: string, lever: string, data: LeverValue) => void 
 }) {
   return (
     <div className="space-y-6">
@@ -367,7 +354,7 @@ function InfrastructureStep({
   onUpdate 
 }: { 
   responses: AssessmentResponses
-  onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number | null; applicable: boolean }) => void 
+  onUpdate: (module: string, lever: string, data: LeverValue) => void 
 }) {
   // Suppress unused parameter warnings for interface compliance
   void responses;
@@ -555,7 +542,7 @@ function CompanyStep({
   emailError
 }: { 
   responses: AssessmentResponses
-  onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number | null; applicable: boolean }) => void
+  onUpdate: (module: string, lever: string, data: LeverValue) => void
   formData: {
     email: string;
     company: string;
@@ -632,97 +619,61 @@ function CompanyStep({
   )
 }
 
-// Enhanced question component with explicit maturity capture
-function SimpleQuestion({ 
-  label, 
+function SimpleQuestion({
+  label,
   description,
-  value, 
-  onChange 
-}: { 
-  label: string
-  description?: string
-  value?: { present: boolean; maturity: number | null; applicable: boolean }
-  onChange: (data: { present: boolean; maturity: number | null; applicable: boolean }) => void 
+  value,
+  onChange,
+}: {
+  label: string;
+  description?: string;
+  value?: LeverValue;
+  onChange: (data: LeverValue) => void;
 }) {
   const handlePresentChange = (present: boolean) => {
-    onChange({
-      present,
-      maturity: present ? null : 0,
-      applicable: true
-    });
+    onChange({ present, maturity: present ? null : 0, applicable: true });
   };
 
   const handleMaturityChange = (maturity: number) => {
-    onChange({
-      present: true,
-      maturity,
-      applicable: true
-    });
-  };
-
-  const handleApplicableChange = (applicable: boolean) => {
-    onChange({
-      present: false,
-      maturity: 0,
-      applicable
-    });
+    onChange({ ...value!, present: true, maturity: Number(maturity) });
   };
 
   return (
-    <div className="border rounded-lg p-4 space-y-3">
-      <div>
-        <label className="block font-medium">{label}</label>
-        {description && (
-          <p className="text-sm text-gray-600 mt-1">{description}</p>
-        )}
-      </div>
-      
-      <div className="space-y-3">
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={value?.present || false}
-              onChange={(e) => handlePresentChange(e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm">We do this</span>
-          </label>
-          
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={value?.applicable === false}
-              onChange={(e) => handleApplicableChange(!e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm">Not applicable to us</span>
-          </label>
-        </div>
-        
+    <div className="space-y-2">
+      <label className="font-medium">{label}</label>
+      {description && <p className="text-sm text-muted-foreground">{description}</p>}
+
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={!!value?.present}
+          onChange={(e) => handlePresentChange(e.target.checked)}
+          className="rounded"
+        />
+        <span className="text-sm">We do this</span>
+
         {value?.present && (
-          <div className="ml-6 space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              How well do you do this? <span className="text-red-500">*</span>
-            </label>
-            <select 
-              value={value.maturity ?? ''}
-              onChange={(e) => handleMaturityChange(Number(e.target.value))}
-              className={`text-sm p-2 border rounded w-full max-w-xs ${value.maturity === null ? 'border-red-300' : ''}`}
-              required
-              autoFocus
-            >
-              <option value="" disabled>Select maturity</option>
-              <option value={1}>Basic - Ad-hoc/inconsistent</option>
-              <option value={2}>Consistent - Defined process</option>
-              <option value={3}>Advanced - Well-optimized</option>
-            </select>
-            {value.maturity === null && (
-              <p className="text-xs text-red-500">Please select a maturity level</p>
-            )}
-          </div>
+          <select
+            value={value.maturity ?? ''}
+            onChange={e => onChange({ ...value!, present: true, maturity: Number(e.target.value) })}
+            className={`text-sm p-2 border rounded ${value.maturity === null ? 'border-red-300' : ''}`}
+          >
+            <option value="" disabled>Select maturity</option>
+            <option value={1}>Basic</option>
+            <option value={2}>Consistent</option>
+            <option value={3}>Advanced</option>
+          </select>
         )}
       </div>
+
+      <label className="inline-flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={value?.applicable === false}
+          onChange={e => onChange({ ...value!, applicable: !e.target.checked, present: false, maturity: 0 })}
+        />
+        <span className="text-sm">Not applicable to us</span>
+      </label>
     </div>
-  )
+  );
 }
