@@ -274,7 +274,7 @@ export function computeGapImpact(responses: AssessmentResponses, _scores: Assess
     Object.entries(levers).forEach(([lever, weight]) => {
       const moduleResponses = responses[module as keyof AssessmentResponses];
       if (moduleResponses) {
-        const response = (moduleResponses as Record<string, { present?: boolean; maturity?: number | null; applicable?: boolean }>)[lever];
+        const response = (moduleResponses as Record<string, { present?: boolean; applicable?: boolean }>)[lever];
         if (response && response.applicable !== false) {
           const presentMultiplier = response.present ? 1 : 0;
           const impact = weight * (1 - presentMultiplier);
@@ -338,7 +338,7 @@ export function computeStructuredGaps(responses: AssessmentResponses, _scores: A
     Object.entries(levers).forEach(([lever, weight]) => {
       const moduleResponses = responses[module as keyof AssessmentResponses];
       if (moduleResponses) {
-        const response = (moduleResponses as Record<string, { present?: boolean; maturity?: number | null; applicable?: boolean }>)[lever];
+        const response = (moduleResponses as Record<string, { present?: boolean; applicable?: boolean }>)[lever];
         if (response && response.applicable !== false) {
           const present = response.present || false;
           const multiplier = present ? 1 : 0;

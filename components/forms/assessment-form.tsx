@@ -34,7 +34,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
   })
   const [emailError, setEmailError] = useState<string>('')
 
-  const totalSteps = 4
+  const totalSteps = 3
 
   const updateFormData = (field: string, value: string) => {
     if (field.startsWith('calibration.')) {
@@ -96,9 +96,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
       case 2:
         return true // Infrastructure questions
       case 3:
-        return true // Calibration metrics
-      case 4:
-        return formData.email && formData.company && formData.industry && !emailError // Email and company info at the end
+        return formData.email && formData.company && formData.industry && !emailError // Email and company info
       default:
         return false
     }
@@ -165,13 +163,6 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
           )}
 
           {currentStep === 3 && (
-            <CalibrationStep 
-              calibration={formData.calibration}
-              updateFormData={updateFormData}
-            />
-          )}
-
-          {currentStep === 4 && (
             <CompanyStep 
               responses={formData.responses}
               onUpdate={updateResponses}
@@ -473,76 +464,6 @@ function InfrastructureStep({
   )
 }
 
-function CalibrationStep({ 
-  calibration,
-  updateFormData
-}: { 
-  calibration: {
-    monthlyLeads: string;
-    meetingRate: string;
-    salesCycle: string;
-  }
-  updateFormData: (field: string, value: string) => void
-}) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold">Help us calibrate your current performance</h3>
-        <p className="text-sm text-gray-600 mt-2">
-          These metrics help us provide more accurate recommendations tailored to your situation.
-        </p>
-      </div>
-      
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">Monthly Inbound Leads (last 90 days)</label>
-          <select
-            value={calibration.monthlyLeads}
-            onChange={(e) => updateFormData('calibration.monthlyLeads', e.target.value)}
-            className="w-full p-3 border rounded-lg"
-          >
-            <option value="">Select range</option>
-            <option value="0-10">0-10 leads</option>
-            <option value="11-25">11-25 leads</option>
-            <option value="26-50">26-50 leads</option>
-            <option value="51-100">51-100 leads</option>
-            <option value="100+">100+ leads</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-2">Meeting Rate (last 90 days)</label>
-          <select
-            value={calibration.meetingRate}
-            onChange={(e) => updateFormData('calibration.meetingRate', e.target.value)}
-            className="w-full p-3 border rounded-lg"
-          >
-            <option value="">Select rate</option>
-            <option value="<10">Less than 10%</option>
-            <option value="10-25">10-25%</option>
-            <option value="25-40">25-40%</option>
-            <option value="40+">40%+</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-2">Typical Sales Cycle Length</label>
-          <select
-            value={calibration.salesCycle}
-            onChange={(e) => updateFormData('calibration.salesCycle', e.target.value)}
-            className="w-full p-3 border rounded-lg"
-          >
-            <option value="">Select cycle length</option>
-            <option value="<30">Less than 30 days</option>
-            <option value="30-90">30-90 days</option>
-            <option value="90-180">90-180 days</option>
-            <option value="180+">180+ days</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function CompanyStep({ 
   responses, 
@@ -642,7 +563,12 @@ function SimpleQuestion({
 }) {
   const handlePresentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const present = e.target.checked;
-    onChange({ present, applicable: value?.applicable ?? true });
+    onChange({ present, applicable: present ? true : (value?.applicable ?? true) });
+  };
+
+  const handleApplicableChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const applicable = !e.target.checked;
+    onChange({ present: applicable ? false : (value?.present ?? false), applicable });
   };
 
 
@@ -657,6 +583,7 @@ function SimpleQuestion({
           checked={!!value?.present}
           onChange={handlePresentChange}
           className="rounded"
+          disabled={value?.applicable === false}
         />
         <span className="text-sm">We do this</span>
 
@@ -666,7 +593,8 @@ function SimpleQuestion({
         <input
           type="checkbox"
           checked={value?.applicable === false}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...value!, applicable: !e.target.checked, present: false })}
+          onChange={handleApplicableChange}
+          className="rounded"
         />
         <span className="text-sm">Not applicable to us</span>
       </label>
