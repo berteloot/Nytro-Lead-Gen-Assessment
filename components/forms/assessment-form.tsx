@@ -139,11 +139,11 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
             </span>
           </div>
           <p className="text-sm text-gray-600">
-            Get your personalized demand gen health check — with insights you can take to your CEO.
+            Get your personalized demand gen health check — with actionable insights for your team.
           </p>
           <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
             <p className="text-sm text-green-800 font-medium">
-              🎯 We&apos;re already analyzing your responses to find your top 3 growth levers!
+              🎯 We&apos;re already analyzing your responses to generate your personalized report!
             </p>
           </div>
         </CardHeader>

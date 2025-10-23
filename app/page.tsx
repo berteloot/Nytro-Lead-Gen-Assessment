@@ -52,7 +52,7 @@ export default function HomePage() {
           </div>
           
           <p className="text-lg text-[#313C59] mb-6 max-w-xl mx-auto">
-            Get your personalized demand gen health check — with insights you can take to your CEO.
+            Get your personalized demand gen health check — with actionable insights for your team.
           </p>
           
           <div className="bg-gradient-to-r from-blue-50 to-orange-50 rounded-lg p-4 mb-8 max-w-2xl mx-auto border border-[#F86A0E]/20">
