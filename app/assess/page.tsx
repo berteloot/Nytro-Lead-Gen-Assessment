@@ -201,10 +201,6 @@ export default function AssessPage() {
       return
     }
 
-    console.log('Starting email report generation...', {
-      assessmentId: result.assessmentId,
-      email: result.email
-    })
 
     setIsEmailingReport(true)
     try {
@@ -219,15 +215,10 @@ export default function AssessPage() {
         }),
       })
 
-      console.log('Email report response:', response.status, response.statusText)
-
       if (response.ok) {
-        const responseData = await response.json()
-        console.log('Email report success:', responseData)
         alert('Report sent successfully! Check your email for your comprehensive assessment report.')
       } else {
         const errorData = await response.json()
-        console.error('Email report error:', errorData)
         if (errorData.error?.includes('not configured')) {
           alert('Email service is currently unavailable. Please use the "Download PDF Report" button instead.')
         } else {
