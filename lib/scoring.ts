@@ -1,7 +1,7 @@
 // type Module = "inbound" | "outbound" | "content" | "paid" | "nurture" | "infra" | "attr";
 
 // LeverValue type for individual lever responses
-export type LeverValue = { present: boolean; maturity: number | null; applicable: boolean };
+export type LeverValue = { present: boolean; applicable: boolean };
 
 export interface AssessmentResponses {
   inbound: {
@@ -92,65 +92,63 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
     attr: 5           // Important for optimization
   };
 
-  const m: {[key: number]: number} = {0: 0, 1: 0.5, 2: 0.75, 3: 1};
-
-  const moduleScore = (levers: {weight: number; maturity: number|null; applicable: boolean}[]) => {
+  const moduleScore = (levers: {weight: number; present: boolean; applicable: boolean}[]) => {
     const denom = levers.filter(l => l.applicable).reduce((s,l) => s + l.weight, 0);
     const numer = levers
       .filter(l => l.applicable)
-      .reduce((s,l) => s + l.weight * m[l.maturity ?? 0], 0);
+      .reduce((s,l) => s + l.weight * (l.present ? 1 : 0), 0);
     return denom ? Math.round(100 * numer / denom) : null;
   };
 
   // Score inbound marketing with pipeline impact weights
   const inbound = moduleScore([
-    { weight: 3, maturity: responses.inbound?.seo?.maturity ?? 0, applicable: responses.inbound?.seo?.applicable !== false },
-    { weight: 4, maturity: responses.inbound?.leadMagnets?.maturity ?? 0, applicable: responses.inbound?.leadMagnets?.applicable !== false },
-    { weight: 3, maturity: responses.inbound?.webinars?.maturity ?? 0, applicable: responses.inbound?.webinars?.applicable !== false }
+    { weight: 3, present: responses.inbound?.seo?.present ?? false, applicable: responses.inbound?.seo?.applicable !== false },
+    { weight: 4, present: responses.inbound?.leadMagnets?.present ?? false, applicable: responses.inbound?.leadMagnets?.applicable !== false },
+    { weight: 3, present: responses.inbound?.webinars?.present ?? false, applicable: responses.inbound?.webinars?.applicable !== false }
   ]);
 
   const outbound = moduleScore([
-    { weight: 5, maturity: responses.outbound?.sequences?.maturity ?? 0, applicable: responses.outbound?.sequences?.applicable !== false },
-    { weight: 6, maturity: responses.outbound?.deliverability?.maturity ?? 0, applicable: responses.outbound?.deliverability?.applicable !== false },
-    { weight: 4, maturity: responses.outbound?.linkedin?.maturity ?? 0, applicable: responses.outbound?.linkedin?.applicable !== false },
-    { weight: 2, maturity: responses.outbound?.phone?.maturity ?? 0, applicable: responses.outbound?.phone?.applicable !== false }
+    { weight: 5, present: responses.outbound?.sequences?.present ?? false, applicable: responses.outbound?.sequences?.applicable !== false },
+    { weight: 6, present: responses.outbound?.deliverability?.present ?? false, applicable: responses.outbound?.deliverability?.applicable !== false },
+    { weight: 4, present: responses.outbound?.linkedin?.present ?? false, applicable: responses.outbound?.linkedin?.applicable !== false },
+    { weight: 2, present: responses.outbound?.phone?.present ?? false, applicable: responses.outbound?.phone?.applicable !== false }
   ]);
 
   // Score content with pipeline impact weights
   const content = moduleScore([
-    { weight: 2, maturity: responses.content?.blog?.maturity ?? 0, applicable: responses.content?.blog?.applicable !== false },
-    { weight: 5, maturity: responses.content?.caseStudies?.maturity ?? 0, applicable: responses.content?.caseStudies?.applicable !== false },
-    { weight: 3, maturity: responses.content?.moFuAssets?.maturity ?? 0, applicable: responses.content?.moFuAssets?.applicable !== false },
-    { weight: 5, maturity: responses.content?.boFuAssets?.maturity ?? 0, applicable: responses.content?.boFuAssets?.applicable !== false },
-    { weight: 2, maturity: responses.content?.distribution?.maturity ?? 0, applicable: responses.content?.distribution?.applicable !== false }
+    { weight: 2, present: responses.content?.blog?.present ?? false, applicable: responses.content?.blog?.applicable !== false },
+    { weight: 5, present: responses.content?.caseStudies?.present ?? false, applicable: responses.content?.caseStudies?.applicable !== false },
+    { weight: 3, present: responses.content?.moFuAssets?.present ?? false, applicable: responses.content?.moFuAssets?.applicable !== false },
+    { weight: 5, present: responses.content?.boFuAssets?.present ?? false, applicable: responses.content?.boFuAssets?.applicable !== false },
+    { weight: 2, present: responses.content?.distribution?.present ?? false, applicable: responses.content?.distribution?.applicable !== false }
   ]);
 
   const paid = moduleScore([
-    { weight: 4, maturity: responses.paid?.ppc?.maturity ?? 0, applicable: responses.paid?.ppc?.applicable !== false },
-    { weight: 5, maturity: responses.paid?.linkedinLeadGen?.maturity ?? 0, applicable: responses.paid?.linkedinLeadGen?.applicable !== false },
-    { weight: 4, maturity: responses.paid?.retargeting?.maturity ?? 0, applicable: responses.paid?.retargeting?.applicable !== false },
-    { weight: 2, maturity: responses.paid?.socialAds?.maturity ?? 0, applicable: responses.paid?.socialAds?.applicable !== false },
-    { weight: 3, maturity: responses.paid?.abm?.maturity ?? 0, applicable: responses.paid?.abm?.applicable !== false }
+    { weight: 4, present: responses.paid?.ppc?.present ?? false, applicable: responses.paid?.ppc?.applicable !== false },
+    { weight: 5, present: responses.paid?.linkedinLeadGen?.present ?? false, applicable: responses.paid?.linkedinLeadGen?.applicable !== false },
+    { weight: 4, present: responses.paid?.retargeting?.present ?? false, applicable: responses.paid?.retargeting?.applicable !== false },
+    { weight: 2, present: responses.paid?.socialAds?.present ?? false, applicable: responses.paid?.socialAds?.applicable !== false },
+    { weight: 3, present: responses.paid?.abm?.present ?? false, applicable: responses.paid?.abm?.applicable !== false }
   ]);
 
   const nurture = moduleScore([
-    { weight: 5, maturity: responses.nurture?.drip?.maturity ?? 0, applicable: responses.nurture?.drip?.applicable !== false },
-    { weight: 6, maturity: responses.nurture?.scoringTriggers?.maturity ?? 0, applicable: responses.nurture?.scoringTriggers?.applicable !== false },
-    { weight: 4, maturity: responses.nurture?.intentSignals?.maturity ?? 0, applicable: responses.nurture?.intentSignals?.applicable !== false },
-    { weight: 3, maturity: responses.nurture?.reactivation?.maturity ?? 0, applicable: responses.nurture?.reactivation?.applicable !== false }
+    { weight: 5, present: responses.nurture?.drip?.present ?? false, applicable: responses.nurture?.drip?.applicable !== false },
+    { weight: 6, present: responses.nurture?.scoringTriggers?.present ?? false, applicable: responses.nurture?.scoringTriggers?.applicable !== false },
+    { weight: 4, present: responses.nurture?.intentSignals?.present ?? false, applicable: responses.nurture?.intentSignals?.applicable !== false },
+    { weight: 3, present: responses.nurture?.reactivation?.present ?? false, applicable: responses.nurture?.reactivation?.applicable !== false }
   ]);
 
   const infra = moduleScore([
-    { weight: 6, maturity: responses.infra?.crm?.maturity ?? 0, applicable: responses.infra?.crm?.applicable !== false },
-    { weight: 5, maturity: responses.infra?.marketingAutomation?.maturity ?? 0, applicable: responses.infra?.marketingAutomation?.applicable !== false },
-    { weight: 3, maturity: responses.infra?.enrichment?.maturity ?? 0, applicable: responses.infra?.enrichment?.applicable !== false },
-    { weight: 2, maturity: responses.infra?.realtimeSync?.maturity ?? 0, applicable: responses.infra?.realtimeSync?.applicable !== false }
+    { weight: 6, present: responses.infra?.crm?.present ?? false, applicable: responses.infra?.crm?.applicable !== false },
+    { weight: 5, present: responses.infra?.marketingAutomation?.present ?? false, applicable: responses.infra?.marketingAutomation?.applicable !== false },
+    { weight: 3, present: responses.infra?.enrichment?.present ?? false, applicable: responses.infra?.enrichment?.applicable !== false },
+    { weight: 2, present: responses.infra?.realtimeSync?.present ?? false, applicable: responses.infra?.realtimeSync?.applicable !== false }
   ]);
 
   const attr = moduleScore([
-    { weight: 6, maturity: responses.attr?.multiTouch?.maturity ?? 0, applicable: responses.attr?.multiTouch?.applicable !== false },
-    { weight: 4, maturity: responses.attr?.dashboards?.maturity ?? 0, applicable: responses.attr?.dashboards?.applicable !== false },
-    { weight: 3, maturity: responses.attr?.ctaTracking?.maturity ?? 0, applicable: responses.attr?.ctaTracking?.applicable !== false }
+    { weight: 6, present: responses.attr?.multiTouch?.present ?? false, applicable: responses.attr?.multiTouch?.applicable !== false },
+    { weight: 4, present: responses.attr?.dashboards?.present ?? false, applicable: responses.attr?.dashboards?.applicable !== false },
+    { weight: 3, present: responses.attr?.ctaTracking?.present ?? false, applicable: responses.attr?.ctaTracking?.applicable !== false }
   ]);
 
   // Calculate overall score as weighted average of applicable modules only
@@ -187,27 +185,24 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   if ((infra || 0) < 40) {
     prerequisites.push('Marketing infrastructure needs improvement before advanced tactics');
   }
-  if (responses.outbound?.deliverability?.present && (responses.outbound.deliverability.maturity || 0) < 2) {
+  if (responses.outbound?.deliverability?.present) {
     prerequisites.push('Email deliverability needs improvement before scaling outbound');
   }
-  if (responses.infra?.crm?.present && (responses.infra.crm.maturity || 0) < 2) {
+  if (responses.infra?.crm?.present) {
     prerequisites.push('CRM hygiene needs improvement before advanced automation');
   }
-  if (responses.attr?.multiTouch?.present && (responses.attr.multiTouch.maturity || 0) < 2) {
+  if (responses.attr?.multiTouch?.present) {
     prerequisites.push('Attribution tracking needs improvement before scaling spend');
   }
 
-  // Risk checks
-  if (responses.paid?.ppc?.present && (responses.paid.ppc.maturity || 0) >= 2 && 
-      responses.content?.boFuAssets?.present && (responses.content.boFuAssets.maturity || 0) < 2) {
+  // Risk checks - simplified for binary present/absent
+  if (responses.paid?.ppc?.present && !responses.content?.boFuAssets?.present) {
     risks.push('Paid traffic may leak without strong bottom-of-funnel content');
   }
-  if (responses.nurture?.scoringTriggers?.present && (responses.nurture.scoringTriggers.maturity || 0) < 2 &&
-      responses.nurture?.drip?.present && (responses.nurture.drip.maturity || 0) >= 2) {
+  if (!responses.nurture?.scoringTriggers?.present && responses.nurture?.drip?.present) {
     risks.push('Lead scoring needs improvement to optimize nurture sequences');
   }
-  if (responses.outbound?.sequences?.present && (responses.outbound.sequences.maturity || 0) >= 2 &&
-      responses.outbound?.deliverability?.present && (responses.outbound.deliverability.maturity || 0) < 2) {
+  if (responses.outbound?.sequences?.present && !responses.outbound?.deliverability?.present) {
     risks.push('Outbound sequences may underperform without proper deliverability');
   }
 
@@ -270,14 +265,14 @@ export function computeGapImpact(responses: AssessmentResponses, _scores: Assess
       if (moduleResponses) {
         const response = (moduleResponses as Record<string, { present?: boolean; maturity?: number | null; applicable?: boolean }>)[lever];
         if (response && response.applicable !== false) {
-          const maturityMultiplier = maturityWeights[Math.min(response.maturity || 0, 3)] || 0;
-          const impact = weight * (1 - maturityMultiplier);
+          const presentMultiplier = response.present ? 1 : 0;
+          const impact = weight * (1 - presentMultiplier);
           if (impact > 0) {
             gaps.push({
               module,
               lever,
               impact,
-              maturity: response.maturity || 0
+              maturity: response.present ? 1 : 0
             });
           }
         }
@@ -292,15 +287,15 @@ export function checkPrerequisites(responses: AssessmentResponses): string[] {
   const risks: string[] = [];
   
   // Check for critical infrastructure prerequisites
-  if (!responses.infra?.crm?.present || (responses.infra?.crm?.maturity || 0) < 1) {
+  if (!responses.infra?.crm?.present) {
     risks.push('No CRM system in place - this is a prerequisite for most marketing activities');
   }
   
-  if (!responses.outbound?.deliverability?.present || (responses.outbound?.deliverability?.maturity || 0) < 1) {
+  if (!responses.outbound?.deliverability?.present) {
     risks.push('Email deliverability issues detected - outbound campaigns will have poor performance');
   }
   
-  if (!responses.infra?.marketingAutomation?.present || (responses.infra?.marketingAutomation?.maturity || 0) < 1) {
+  if (!responses.infra?.marketingAutomation?.present) {
     risks.push('No marketing automation platform - lead nurturing will be manual and inconsistent');
   }
   
@@ -336,16 +331,15 @@ export function computeStructuredGaps(responses: AssessmentResponses, scores: As
         const response = (moduleResponses as Record<string, { present?: boolean; maturity?: number | null; applicable?: boolean }>)[lever];
         if (response && response.applicable !== false) {
           const present = response.present || false;
-          const maturity = response.maturity || 0;
-          const multiplier = maturityWeights[Math.min(maturity, 3)] || 0;
-          // Impact = weight × (1 - maturityMultiplier)
+          const multiplier = present ? 1 : 0;
+          // Impact = weight × (1 - presentMultiplier)
           const computedImpact = weight * (1 - multiplier);
           
           structuredGaps.push({
             module,
             lever,
             present,
-            maturity,
+            maturity: present ? 1 : 0,
             weight,
             multiplier,
             computedImpact
@@ -362,17 +356,15 @@ export function computeConfidence(responses: AssessmentResponses, calibration?: 
   let answeredLevers = 0;
   let modulesAnswered = 0;
 
-  // Count answered levers (only if present=false OR (present=true AND maturity is set))
+  // Count answered levers (simplified for binary present/absent)
   Object.values(responses).forEach(module => {
     if (module) {
       let moduleHasAnswers = false;
       Object.values(module).forEach(lever => {
-        if (lever && typeof lever === 'object' && 'present' in lever && 'maturity' in lever && 'applicable' in lever) {
-          const typedLever = lever as { present: boolean; maturity: number | null; applicable: boolean };
-          // Count as answered if: not applicable OR (present=false) OR (present=true AND maturity is set)
-          const isAnswered = typedLever.applicable === false || 
-                           !typedLever.present || 
-                           (typedLever.present && typedLever.maturity !== null && typedLever.maturity > 0);
+        if (lever && typeof lever === 'object' && 'present' in lever && 'applicable' in lever) {
+          const typedLever = lever as { present: boolean; applicable: boolean };
+          // Count as answered if: not applicable OR present is set (true or false)
+          const isAnswered = typedLever.applicable === false || typedLever.present !== undefined;
           if (isAnswered) {
             answeredLevers++;
             moduleHasAnswers = true;
@@ -383,11 +375,11 @@ export function computeConfidence(responses: AssessmentResponses, calibration?: 
     }
   });
 
-  // Check for critical levers with maturity set
-  const hasInfraMaturity = responses.infra?.crm?.maturity !== undefined || 
-                          responses.infra?.marketingAutomation?.maturity !== undefined;
-  const hasAttrMaturity = responses.attr?.multiTouch?.maturity !== undefined || 
-                          responses.attr?.dashboards?.maturity !== undefined;
+  // Check for critical levers with responses
+  const hasInfraMaturity = responses.infra?.crm?.present || 
+                          responses.infra?.marketingAutomation?.present;
+  const hasAttrMaturity = responses.attr?.multiTouch?.present || 
+                          responses.attr?.dashboards?.present;
   // const hasNurtureMaturity = responses.nurture?.drip?.maturity !== undefined || 
   //                            responses.nurture?.scoringTriggers?.maturity !== undefined;
   

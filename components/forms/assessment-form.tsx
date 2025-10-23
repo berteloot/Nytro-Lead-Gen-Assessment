@@ -104,10 +104,8 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
     }
   }
 
-  const hasIncomplete = Object.values(formData.responses as Responses).some(
-    (mod: Record<string, LeverValue> | undefined) =>
-      !!mod && Object.values(mod).some((l: LeverValue) => l.present && l.maturity == null)
-  );
+  // No longer need to check for incomplete maturity since we removed the dropdown
+  const hasIncomplete = false;
 
   const progress = calculateProgress(currentStep, totalSteps)
 
@@ -205,7 +203,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
                 disabled={!isStepValid() || hasIncomplete}
                 className="bg-[#F86A0E] hover:bg-[#e55a0a] text-white"
               >
-                {hasIncomplete ? 'Please complete all maturity selections' : 'Get My Health Check'}
+                Get My Health Check
               </Button>
             )}
           </div>
@@ -634,7 +632,7 @@ function SimpleQuestion({
 }) {
   const handlePresentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const present = e.target.checked;
-    onChange({ present, maturity: present ? null : 0, applicable: value?.applicable ?? true });
+    onChange({ present, applicable: value?.applicable ?? true });
   };
 
 
@@ -652,25 +650,13 @@ function SimpleQuestion({
         />
         <span className="text-sm">We do this</span>
 
-        {value?.present && (
-          <select
-            value={value.maturity ?? ''}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange({ ...value!, present: true, maturity: Number(e.target.value) as 1|2|3 })}
-            className={`text-sm p-2 border rounded ${value.maturity === null ? 'border-red-300' : ''}`}
-          >
-            <option value="" disabled>Select maturity</option>
-            <option value={1}>Basic</option>
-            <option value={2}>Consistent</option>
-            <option value={3}>Advanced</option>
-          </select>
-        )}
       </div>
 
       <label className="inline-flex items-center gap-2">
         <input
           type="checkbox"
           checked={value?.applicable === false}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...value!, applicable: !e.target.checked, present: false, maturity: 0 })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...value!, applicable: !e.target.checked, present: false })}
         />
         <span className="text-sm">Not applicable to us</span>
       </label>
