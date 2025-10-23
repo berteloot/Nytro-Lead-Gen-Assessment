@@ -268,21 +268,6 @@ export function AssessmentPdf({ assessment }: { assessment: AssessmentData }) {
           <ScoreRow label="Attribution & Analytics" score={assessment.scoreAttribution} />
         </View>
 
-        {/* Top Growth Levers */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Top Growth Opportunities</Text>
-          {assessment.growthLevers.map((lever, index) => (
-            <View key={index} style={styles.leverItem}>
-              <Text style={styles.leverTitle}>
-                {index + 1}. {lever.name}
-              </Text>
-              <Text style={styles.leverDescription}>{lever.why}</Text>
-              <Text style={styles.leverImpact}>
-                Expected Impact: {lever.expectedImpact} (Confidence: {lever.confidence})
-              </Text>
-            </View>
-          ))}
-        </View>
 
         {/* Risk Flags */}
         {assessment.riskFlags && assessment.riskFlags.length > 0 && (

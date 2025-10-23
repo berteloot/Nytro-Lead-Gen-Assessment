@@ -50,7 +50,6 @@ export function ResultsDashboard({
   console.log('ResultsDashboard props:', {
     scores,
     summary,
-    growthLevers,
     riskFlags,
     company,
     industry

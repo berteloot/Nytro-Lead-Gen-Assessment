@@ -384,17 +384,6 @@ function createFullReportEmailTemplate(companyName: string, overallScore: number
                 </div>
             </div>
 
-            <!-- Growth Opportunities -->
-            <div class="section">
-                <div class="section-title">Top Growth Opportunities</div>
-                ${assessmentData.growthLevers.map((lever, index: number) => `
-                    <div class="lever-item">
-                        <div class="lever-title">${index + 1}. ${lever.name}</div>
-                        <div class="lever-description">${lever.why}</div>
-                        <div class="lever-impact">Expected Impact: ${lever.expectedImpact} (Confidence: ${lever.confidence})</div>
-                    </div>
-                `).join('')}
-            </div>
 
             <!-- Risk Areas -->
             ${assessmentData.riskFlags && assessmentData.riskFlags.length > 0 ? `
