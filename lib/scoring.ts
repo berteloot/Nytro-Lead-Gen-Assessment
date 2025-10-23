@@ -313,7 +313,7 @@ export function checkPrerequisites(responses: AssessmentResponses): string[] {
   return risks;
 }
 
-export function computeStructuredGaps(responses: AssessmentResponses, scores: AssessmentScores) {
+export function computeStructuredGaps(responses: AssessmentResponses, _scores: AssessmentScores) {
   const leverWeights = {
     inbound: { seo: 3, leadMagnets: 4, webinars: 3 },
     outbound: { sequences: 5, deliverability: 6, linkedin: 4, phone: 2 },
@@ -324,7 +324,6 @@ export function computeStructuredGaps(responses: AssessmentResponses, scores: As
     attr: { multiTouch: 6, dashboards: 4, ctaTracking: 3 }
   };
 
-  const maturityWeights = [0, 0.5, 0.75, 1.0];
   const structuredGaps: Array<{
     module: string;
     lever: string;
@@ -363,7 +362,7 @@ export function computeStructuredGaps(responses: AssessmentResponses, scores: As
   return structuredGaps.sort((a, b) => b.computedImpact - a.computedImpact);
 }
 
-export function computeConfidence(responses: AssessmentResponses, calibration?: { monthlyLeads: string; meetingRate: string; salesCycle: string }) {
+export function computeConfidence(responses: AssessmentResponses, _calibration?: { monthlyLeads: string; meetingRate: string; salesCycle: string }) {
   let answeredLevers = 0;
   let modulesAnswered = 0;
 

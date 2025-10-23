@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { calculateProgress, validateEmail } from '@/lib/utils'
 import { type AssessmentResponses, type LeverValue } from '@/lib/scoring'
-import type { Responses, ModuleKey } from '@/types/form'
+import type { ModuleKey } from '@/types/form'
 
 interface AssessmentFormProps {
   onComplete: (data: {
@@ -230,7 +230,7 @@ function LeadGenStep({
         </p>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
           <p className="text-sm text-blue-800">
-            💡 <strong>Tip:</strong> Only check "We do this" if you have a consistent, repeatable process. If it&apos;s ad-hoc or experimental, leave it unchecked.
+            💡 <strong>Tip:</strong> Only check &quot;We do this&quot; if you have a consistent, repeatable process. If it&apos;s ad-hoc or experimental, leave it unchecked.
           </p>
         </div>
       </div>
@@ -373,7 +373,7 @@ function InfrastructureStep({
         </p>
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
           <p className="text-sm text-amber-800">
-            ⚠️ <strong>Important:</strong> Mark as "Not applicable" only if the lever truly doesn&apos;t fit your business model. This helps us give you more accurate scores.
+            ⚠️ <strong>Important:</strong> Mark as &quot;Not applicable&quot; only if the lever truly doesn&apos;t fit your business model. This helps us give you more accurate scores.
           </p>
         </div>
       </div>

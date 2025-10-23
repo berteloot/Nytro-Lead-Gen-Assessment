@@ -17,6 +17,7 @@ export interface RecommendationInput {
     module: string;
     lever: string;
     present: boolean;
+    maturity: number;
     weight: number;
     multiplier: number;
     computedImpact: number;
