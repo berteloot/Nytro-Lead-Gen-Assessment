@@ -3,7 +3,39 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { ResultsDashboard } from '@/components/results/results-dashboard'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { type AssessmentScores } from '@/lib/scoring'
+import { z } from 'zod'
+
+// Runtime validation schema
+const AssessmentResultSchema = z.object({
+  assessmentId: z.string(),
+  scores: z.object({
+    inbound: z.number(),
+    outbound: z.number(),
+    content: z.number(),
+    paid: z.number(),
+    nurture: z.number(),
+    infra: z.number(),
+    attr: z.number(),
+    overall: z.number(),
+    outcome: z.enum(['Foundation', 'Momentum', 'Optimization']).default('Foundation'),
+    prerequisites: z.array(z.string()).default([]),
+    risks: z.array(z.string()).default([]),
+  }),
+  summary: z.string(),
+  growthLevers: z.array(z.object({
+    name: z.string(),
+    why: z.string(),
+    expectedImpact: z.string(),
+    confidence: z.enum(['low', 'medium', 'high']),
+    firstStep: z.string(),
+  })).default([]),
+  riskFlags: z.array(z.string()).default([]),
+  company: z.string(),
+  industry: z.string().optional(),
+  email: z.string(),
+})
 
 interface AssessmentResult {
   assessmentId: string
@@ -38,10 +70,19 @@ export default function ResultsPage() {
         if (!response.ok) {
           throw new Error('Assessment not found')
         }
-        const data = await response.json()
-        setResult(data)
+        const rawData = await response.json()
+        
+        // Runtime validation with zod - this will provide safe defaults
+        const validatedData = AssessmentResultSchema.parse(rawData)
+        setResult(validatedData)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load results')
+        console.error('Results fetch error:', err)
+        if (err instanceof z.ZodError) {
+          console.error('Data validation failed:', err.issues)
+          setError('Invalid assessment data format')
+        } else {
+          setError(err instanceof Error ? err.message : 'Failed to load results')
+        }
       } finally {
         setIsLoading(false)
       }
@@ -83,7 +124,15 @@ export default function ResultsPage() {
   }
 
   const handleEmailReport = async () => {
-    if (!result) return
+    if (!result) {
+      console.error('No result data available for email report')
+      return
+    }
+
+    console.log('Starting email report generation...', {
+      assessmentId: result.assessmentId,
+      email: result.email
+    })
 
     setIsEmailingReport(true)
     try {
@@ -98,10 +147,15 @@ export default function ResultsPage() {
         }),
       })
 
+      console.log('Email report response:', response.status, response.statusText)
+
       if (response.ok) {
+        const responseData = await response.json()
+        console.log('Email report success:', responseData)
         alert('Report sent successfully! Check your email for your comprehensive assessment report.')
       } else {
         const errorData = await response.json()
+        console.error('Email report error:', errorData)
         if (errorData.error?.includes('not configured')) {
           alert('Email service is currently unavailable. Please use the "Download PDF Report" button instead.')
         } else {
@@ -149,20 +203,22 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <ResultsDashboard
-        assessmentId={result.assessmentId}
-        scores={result.scores}
-        summary={result.summary}
-        growthLevers={result.growthLevers}
-        riskFlags={result.riskFlags}
-        company={result.company}
-        industry={result.industry}
-        onDownloadPDF={handleDownloadPDF}
-        onBookAudit={handleBookAudit}
-        onEmailReport={handleEmailReport}
-        isDownloadingPDF={isDownloadingPDF}
-        isEmailingReport={isEmailingReport}
-      />
+      <ErrorBoundary>
+        <ResultsDashboard
+          assessmentId={result.assessmentId}
+          scores={result.scores}
+          summary={result.summary}
+          growthLevers={result.growthLevers}
+          riskFlags={result.riskFlags}
+          company={result.company}
+          industry={result.industry}
+          onDownloadPDF={handleDownloadPDF}
+          onBookAudit={handleBookAudit}
+          onEmailReport={handleEmailReport}
+          isDownloadingPDF={isDownloadingPDF}
+          isEmailingReport={isEmailingReport}
+        />
+      </ErrorBoundary>
     </div>
   )
 }

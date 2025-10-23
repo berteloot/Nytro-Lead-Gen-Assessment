@@ -23,6 +23,10 @@ export async function GET(
       )
     }
 
+    // Ensure arrays are always returned, never null/undefined
+    const growthLevers = Array.isArray(assessment.growthLevers) ? assessment.growthLevers : []
+    const riskFlags = Array.isArray(assessment.riskFlags) ? assessment.riskFlags : []
+
     // Return assessment data
     return NextResponse.json({
       assessmentId: assessment.id,
@@ -37,14 +41,8 @@ export async function GET(
         overall: assessment.scoreOverall,
       },
       summary: 'Your lead generation assessment has been completed. Review your scores and recommendations below.',
-      growthLevers: assessment.growthLevers as Array<{
-        name: string;
-        why: string;
-        expectedImpact: string;
-        confidence: 'low' | 'medium' | 'high';
-        firstStep: string;
-      }>,
-      riskFlags: assessment.riskFlags as string[],
+      growthLevers,
+      riskFlags,
       company: assessment.user.company || 'Unknown Company',
       industry: assessment.industry,
       email: assessment.user.email,

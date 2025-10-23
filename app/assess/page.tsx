@@ -4,6 +4,7 @@ import { useState } from 'react'
 // import { useRouter } from 'next/navigation'
 import { AssessmentForm } from '@/components/forms/assessment-form'
 import { ResultsDashboard } from '@/components/results/results-dashboard'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { type AssessmentResponses, type AssessmentScores } from '@/lib/scoring'
 
 interface AssessmentData {
@@ -119,12 +120,20 @@ export default function AssessPage() {
         console.error('HubSpot contact creation failed:', hubspotError);
         // Don't fail the entire flow if HubSpot fails
       }
+      // Ensure arrays are always present with safe defaults
+      const growthLevers = Array.isArray(assessmentResult.recommendation.levers) 
+        ? assessmentResult.recommendation.levers 
+        : []
+      const riskFlags = Array.isArray(assessmentResult.recommendation.risks) 
+        ? assessmentResult.recommendation.risks 
+        : []
+
       setResult({
         assessmentId: assessmentId,
         scores: assessmentResult.scores,
         summary: assessmentResult.recommendation.summary,
-        growthLevers: assessmentResult.recommendation.levers,
-        riskFlags: assessmentResult.recommendation.risks,
+        growthLevers,
+        riskFlags,
         company: data.company,
         industry: data.industry,
         email: data.email
@@ -187,7 +196,15 @@ export default function AssessPage() {
   }
 
   const handleEmailReport = async () => {
-    if (!result) return
+    if (!result) {
+      console.error('No result data available for email report')
+      return
+    }
+
+    console.log('Starting email report generation...', {
+      assessmentId: result.assessmentId,
+      email: result.email
+    })
 
     setIsEmailingReport(true)
     try {
@@ -202,10 +219,15 @@ export default function AssessPage() {
         }),
       })
 
+      console.log('Email report response:', response.status, response.statusText)
+
       if (response.ok) {
+        const responseData = await response.json()
+        console.log('Email report success:', responseData)
         alert('Report sent successfully! Check your email for your comprehensive assessment report.')
       } else {
         const errorData = await response.json()
+        console.error('Email report error:', errorData)
         if (errorData.error?.includes('not configured')) {
           alert('Email service is currently unavailable. Please use the "Download PDF Report" button instead.')
         } else {
@@ -234,20 +256,22 @@ export default function AssessPage() {
 
   if (step === 'results' && result) {
     return (
-      <ResultsDashboard
-        assessmentId={result.assessmentId}
-        scores={result.scores}
-        summary={result.summary}
-        growthLevers={result.growthLevers}
-        riskFlags={result.riskFlags}
-        company={result.company || 'Your Company'}
-        industry={result.industry}
-        onDownloadPDF={handleDownloadPDF}
-        onBookAudit={handleBookAudit}
-        onEmailReport={handleEmailReport}
-        isDownloadingPDF={isDownloadingPDF}
-        isEmailingReport={isEmailingReport}
-      />
+      <ErrorBoundary>
+        <ResultsDashboard
+          assessmentId={result.assessmentId}
+          scores={result.scores}
+          summary={result.summary}
+          growthLevers={result.growthLevers}
+          riskFlags={result.riskFlags}
+          company={result.company || 'Your Company'}
+          industry={result.industry}
+          onDownloadPDF={handleDownloadPDF}
+          onBookAudit={handleBookAudit}
+          onEmailReport={handleEmailReport}
+          isDownloadingPDF={isDownloadingPDF}
+          isEmailingReport={isEmailingReport}
+        />
+      </ErrorBoundary>
     )
   }
 

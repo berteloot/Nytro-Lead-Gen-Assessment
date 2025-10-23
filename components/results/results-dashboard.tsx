@@ -40,8 +40,8 @@ export function ResultsDashboard({
   // assessmentId,
   scores,
   summary,
-  growthLevers,
-  riskFlags,
+  growthLevers = [],
+  riskFlags = [],
   company,
   industry,
   onDownloadPDF,
@@ -52,15 +52,38 @@ export function ResultsDashboard({
 }: ResultsDashboardProps) {
   // const [isLoading, setIsLoading] = useState(false)
 
-  const moduleScores = [
-    { key: 'inbound', score: scores.inbound },
-    { key: 'outbound', score: scores.outbound },
-    { key: 'content', score: scores.content },
-    { key: 'paid', score: scores.paid },
-    { key: 'nurture', score: scores.nurture },
-    { key: 'infra', score: scores.infra },
-    { key: 'attr', score: scores.attr },
-  ]
+  // Add debugging and error handling
+  console.log('ResultsDashboard props:', {
+    scores,
+    summary,
+    growthLevers,
+    riskFlags,
+    company,
+    industry
+  })
+
+  // Validate required props
+  if (!scores) {
+    console.error('ResultsDashboard: scores prop is missing')
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Data Loading Error</h2>
+          <p className="text-gray-600">Assessment data is not available. Please try refreshing the page.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const moduleScores = scores ? [
+    { key: 'inbound', score: scores.inbound || 0 },
+    { key: 'outbound', score: scores.outbound || 0 },
+    { key: 'content', score: scores.content || 0 },
+    { key: 'paid', score: scores.paid || 0 },
+    { key: 'nurture', score: scores.nurture || 0 },
+    { key: 'infra', score: scores.infra || 0 },
+    { key: 'attr', score: scores.attr || 0 },
+  ] : []
 
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
@@ -173,7 +196,7 @@ export function ResultsDashboard({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {moduleScores.map(({ key, score }) => (
+            {moduleScores.length > 0 ? moduleScores.map(({ key, score }) => (
               <div key={key} className="space-y-2">
                 <div className="flex justify-between items-center">
                   <div>
@@ -193,7 +216,11 @@ export function ResultsDashboard({
                   />
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>No scores available at this time.</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -205,7 +232,7 @@ export function ResultsDashboard({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {growthLevers.map((lever, index) => (
+            {growthLevers.length > 0 ? growthLevers.map((lever, index) => (
               <div key={index} className="border rounded-lg p-4">
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-semibold text-lg">
@@ -232,13 +259,17 @@ export function ResultsDashboard({
                   </div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>No prioritized growth levers yet.</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Risk Flags */}
-      {riskFlags && riskFlags.length > 0 && (
+      {riskFlags.length > 0 && (
         <Card>
         <CardHeader>
           <CardTitle>Areas to Focus On</CardTitle>
