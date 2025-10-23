@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { calculateProgress, validateEmail } from '@/lib/utils'
 import { type AssessmentResponses, type LeverValue } from '@/lib/scoring'
+import type { Responses, ModuleKey } from '@/types/form'
 
 interface AssessmentFormProps {
   onComplete: (data: {
@@ -59,7 +60,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
     }
   }
 
-  const updateResponses = (module: string, lever: string, data: LeverValue) => {
+  const updateResponses = (module: ModuleKey, lever: string, data: LeverValue) => {
     setFormData(prev => ({
       ...prev,
       responses: {
@@ -103,8 +104,9 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
     }
   }
 
-  const hasIncomplete = Object.values(formData.responses).some(mod =>
-    mod && Object.values(mod).some((l: any) => l && typeof l === 'object' && 'present' in l && 'maturity' in l && l.present && l.maturity == null)
+  const hasIncomplete = Object.values(formData.responses as Responses).some(
+    (mod: Record<string, LeverValue> | undefined) =>
+      !!mod && Object.values(mod).some((l: LeverValue) => l.present && l.maturity == null)
   );
 
   const progress = calculateProgress(currentStep, totalSteps)
@@ -219,7 +221,7 @@ function LeadGenStep({
   onUpdate 
 }: { 
   responses: AssessmentResponses
-  onUpdate: (module: string, lever: string, data: LeverValue) => void 
+  onUpdate: (module: ModuleKey, lever: string, data: LeverValue) => void 
 }) {
   return (
     <div className="space-y-6">
@@ -354,7 +356,7 @@ function InfrastructureStep({
   onUpdate 
 }: { 
   responses: AssessmentResponses
-  onUpdate: (module: string, lever: string, data: LeverValue) => void 
+  onUpdate: (module: ModuleKey, lever: string, data: LeverValue) => void 
 }) {
   // Suppress unused parameter warnings for interface compliance
   void responses;
@@ -542,7 +544,7 @@ function CompanyStep({
   emailError
 }: { 
   responses: AssessmentResponses
-  onUpdate: (module: string, lever: string, data: LeverValue) => void
+  onUpdate: (module: ModuleKey, lever: string, data: LeverValue) => void
   formData: {
     email: string;
     company: string;
@@ -630,8 +632,9 @@ function SimpleQuestion({
   value?: LeverValue;
   onChange: (data: LeverValue) => void;
 }) {
-  const handlePresentChange = (present: boolean) => {
-    onChange({ present, maturity: present ? null : 0, applicable: true });
+  const handlePresentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const present = e.target.checked;
+    onChange({ present, maturity: present ? null : 0, applicable: value?.applicable ?? true });
   };
 
 
@@ -644,7 +647,7 @@ function SimpleQuestion({
         <input
           type="checkbox"
           checked={!!value?.present}
-          onChange={(e) => handlePresentChange(e.target.checked)}
+          onChange={handlePresentChange}
           className="rounded"
         />
         <span className="text-sm">We do this</span>
@@ -652,7 +655,7 @@ function SimpleQuestion({
         {value?.present && (
           <select
             value={value.maturity ?? ''}
-            onChange={e => onChange({ ...value!, present: true, maturity: Number(e.target.value) })}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange({ ...value!, present: true, maturity: Number(e.target.value) as 1|2|3 })}
             className={`text-sm p-2 border rounded ${value.maturity === null ? 'border-red-300' : ''}`}
           >
             <option value="" disabled>Select maturity</option>
@@ -667,7 +670,7 @@ function SimpleQuestion({
         <input
           type="checkbox"
           checked={value?.applicable === false}
-          onChange={e => onChange({ ...value!, applicable: !e.target.checked, present: false, maturity: 0 })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...value!, applicable: !e.target.checked, present: false, maturity: 0 })}
         />
         <span className="text-sm">Not applicable to us</span>
       </label>
