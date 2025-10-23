@@ -5,16 +5,6 @@ export interface AssessmentResponses {
     seo?: { present: boolean; maturity: number };
     leadMagnets?: { present: boolean; maturity: number };
     webinars?: { present: boolean; maturity: number };
-    retargetedContent?: { present: boolean; maturity: number };
-    employeeAdvocacy?: { present: boolean; maturity: number };
-  };
-  events: {
-    tradeShows?: { present: boolean; maturity: number };
-    conferences?: { present: boolean; maturity: number };
-    sponsorships?: { present: boolean; maturity: number };
-    leadCapture?: { present: boolean; maturity: number };
-    preBookedMeetings?: { present: boolean; maturity: number };
-    followup?: { present: boolean; maturity: number };
   };
   outbound: {
     sequences?: { present: boolean; maturity: number };
@@ -79,12 +69,13 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   // 5: Best-in-class, continuously improving
   
   const weights = { 
-    inbound: 25,      // Includes events + SEO + lead gen
-    outbound: 20,     // Critical for competitive markets
-    paid: 20,         // Paid acquisition is essential
-    nurture: 20,      // Conversion optimization
-    infra: 8,         // Foundation but not weighted as heavily
-    attr: 7           // Important for optimization
+    inbound: 20,      // Includes events + SEO + lead gen
+    outbound: 18,     // Critical for competitive markets
+    content: 15,      // Content marketing is foundational
+    paid: 18,         // Paid acquisition is essential
+    nurture: 18,      // Conversion optimization
+    infra: 6,         // Foundation but not weighted as heavily
+    attr: 5           // Important for optimization
   };
 
   const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number }> = {}, leverWeights: Record<string, number>, moduleName: string) => {
@@ -111,17 +102,11 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
     return finalScore;
   };
 
-  // Include events in inbound scoring
-  const inbound = moduleScore({
-    ...responses.inbound,
-    ...responses.events
-  }, { 
+  // Score inbound marketing (without events since we don't ask about them)
+  const inbound = moduleScore(responses.inbound, { 
     seo: 4,           // SEO & Content Marketing
     leadMagnets: 3,   // Lead Magnets
-    webinars: 3,      // Webinars & Events
-    tradeShows: 2,    // Events & Trade Shows
-    conferences: 2,   // Conference Marketing
-    sponsorships: 2   // Event Sponsorships
+    webinars: 3       // Webinars & Events
   }, 'inbound');
 
   const outbound = moduleScore(responses.outbound, { 
@@ -172,6 +157,7 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   const overall = Math.round(
     (inbound * weights.inbound + 
      outbound * weights.outbound + 
+     content * weights.content +
      paid * weights.paid + 
      nurture * weights.nurture + 
      infra * weights.infra + 
@@ -181,7 +167,7 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   return {
     inbound,
     outbound,
-    content, // Keep for display but not in overall calculation
+    content, // Content is included in overall calculation
     paid,
     nurture,
     infra,

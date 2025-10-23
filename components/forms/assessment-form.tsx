@@ -236,6 +236,12 @@ function LeadGenStep({
               onChange={(data) => onUpdate('outbound', 'sequences', data)}
             />
             <SimpleQuestion
+              label="Email Deliverability"
+              description="Tools and processes to ensure emails reach inboxes"
+              value={responses.outbound?.deliverability}
+              onChange={(data) => onUpdate('outbound', 'deliverability', data)}
+            />
+            <SimpleQuestion
               label="LinkedIn Outreach"
               description="Direct messaging and connection requests"
               value={responses.outbound?.linkedin}
@@ -251,6 +257,30 @@ function LeadGenStep({
         </div>
 
         <div>
+          <h4 className="font-medium mb-3">Content Marketing</h4>
+          <div className="space-y-3">
+            <SimpleQuestion
+              label="Blog & SEO Content"
+              description="Regular blog posts optimized for search"
+              value={responses.content?.blog}
+              onChange={(data) => onUpdate('content', 'blog', data)}
+            />
+            <SimpleQuestion
+              label="Case Studies & Success Stories"
+              description="Customer success stories and ROI proof"
+              value={responses.content?.caseStudies}
+              onChange={(data) => onUpdate('content', 'caseStudies', data)}
+            />
+            <SimpleQuestion
+              label="Sales Enablement Content"
+              description="One-pagers, decks, comparison guides"
+              value={responses.content?.boFuAssets}
+              onChange={(data) => onUpdate('content', 'boFuAssets', data)}
+            />
+          </div>
+        </div>
+
+        <div>
           <h4 className="font-medium mb-3">Paid Advertising</h4>
           <div className="space-y-3">
             <SimpleQuestion
@@ -260,8 +290,14 @@ function LeadGenStep({
               onChange={(data) => onUpdate('paid', 'ppc', data)}
             />
             <SimpleQuestion
+              label="LinkedIn Lead Generation"
+              description="LinkedIn Sponsored Content and Lead Gen Forms"
+              value={responses.paid?.linkedinLeadGen}
+              onChange={(data) => onUpdate('paid', 'linkedinLeadGen', data)}
+            />
+            <SimpleQuestion
               label="Social Media Ads"
-              description="LinkedIn, Facebook, Twitter advertising"
+              description="Facebook, Twitter, Instagram advertising"
               value={responses.paid?.socialAds}
               onChange={(data) => onUpdate('paid', 'socialAds', data)}
             />
@@ -270,6 +306,12 @@ function LeadGenStep({
               description="Ads to website visitors who didn't convert"
               value={responses.paid?.retargeting}
               onChange={(data) => onUpdate('paid', 'retargeting', data)}
+            />
+            <SimpleQuestion
+              label="Account-Based Marketing"
+              description="Targeted campaigns to specific accounts"
+              value={responses.paid?.abm}
+              onChange={(data) => onUpdate('paid', 'abm', data)}
             />
           </div>
         </div>
@@ -308,10 +350,10 @@ function InfrastructureStep({
               onChange={(data) => onUpdate('infra', 'crm', data)}
             />
             <SimpleQuestion
-              label="Lead Scoring"
-              description="Automatically rank leads based on behavior and profile"
-              value={responses.nurture?.scoringTriggers}
-              onChange={(data) => onUpdate('nurture', 'scoringTriggers', data)}
+              label="Marketing Automation"
+              description="HubSpot, Marketo, Pardot, etc."
+              value={responses.infra?.marketingAutomation}
+              onChange={(data) => onUpdate('infra', 'marketingAutomation', data)}
             />
           </div>
         </div>
@@ -326,10 +368,22 @@ function InfrastructureStep({
               onChange={(data) => onUpdate('nurture', 'drip', data)}
             />
             <SimpleQuestion
-              label="Lead Nurturing"
-              description="Automated follow-up based on behavior and interests"
+              label="Lead Scoring"
+              description="Automatically rank leads based on behavior and profile"
+              value={responses.nurture?.scoringTriggers}
+              onChange={(data) => onUpdate('nurture', 'scoringTriggers', data)}
+            />
+            <SimpleQuestion
+              label="Intent Signals"
+              description="Track website behavior and buying signals"
               value={responses.nurture?.intentSignals}
               onChange={(data) => onUpdate('nurture', 'intentSignals', data)}
+            />
+            <SimpleQuestion
+              label="Lead Reactivation"
+              description="Re-engage cold leads with targeted campaigns"
+              value={responses.nurture?.reactivation}
+              onChange={(data) => onUpdate('nurture', 'reactivation', data)}
             />
           </div>
         </div>
@@ -348,6 +402,12 @@ function InfrastructureStep({
               description="Track all touchpoints in customer journey"
               value={responses.attr?.multiTouch}
               onChange={(data) => onUpdate('attr', 'multiTouch', data)}
+            />
+            <SimpleQuestion
+              label="CTA Tracking"
+              description="Track which CTAs and content drive conversions"
+              value={responses.attr?.ctaTracking}
+              onChange={(data) => onUpdate('attr', 'ctaTracking', data)}
             />
           </div>
         </div>
@@ -487,7 +547,7 @@ function SimpleQuestion({
             checked={value?.present || false}
             onChange={(e) => onChange({
               present: e.target.checked,
-              maturity: 3 // Default to medium maturity
+              maturity: 2 // Default to basic implementation
             })}
             className="rounded"
           />

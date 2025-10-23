@@ -139,14 +139,14 @@ Current Stack: ${input.stack.join(", ")}
 
 Return ONLY valid JSON in this exact format:
 {
-  "industryBenchmark": "How their overall score compares to typical ${input.industry} companies (e.g., 'Your 8/100 score indicates early-stage development, which is common for ${input.industry} startups')",
+  "industryBenchmark": "Contextualize their score using these ranges: 0-20 (Early-stage), 21-40 (Developing), 41-60 (Maturing), 61-80 (Advanced), 81-100 (Best-in-class)",
   "competitiveAdvantage": "What they're doing well compared to industry peers",
   "marketOpportunity": "Specific ${input.industry} market trends they could leverage",
   "implementationTimeline": "Realistic timeline for implementing recommendations in ${input.industry} context"
 }
 
 Guidelines:
-- Use directional comparisons rather than specific numbers (e.g., "early-stage" vs "growth-stage")
+- Use the score ranges provided above to contextualize their performance
 - Reference industry buying cycles and decision-making processes
 - Include relevant market trends and opportunities
 - Keep each field under 50 words
