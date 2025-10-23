@@ -104,7 +104,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
   }
 
   const hasIncomplete = Object.values(formData.responses).some(mod =>
-    Object.values(mod || {}).some((l: any) => l.present && l.maturity == null)
+    mod && Object.values(mod).some((l: any) => l && typeof l === 'object' && 'present' in l && 'maturity' in l && l.present && l.maturity == null)
   );
 
   const progress = calculateProgress(currentStep, totalSteps)
@@ -634,9 +634,6 @@ function SimpleQuestion({
     onChange({ present, maturity: present ? null : 0, applicable: true });
   };
 
-  const handleMaturityChange = (maturity: number) => {
-    onChange({ ...value!, present: true, maturity: Number(maturity) });
-  };
 
   return (
     <div className="space-y-2">
