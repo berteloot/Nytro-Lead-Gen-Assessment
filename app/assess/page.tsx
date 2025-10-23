@@ -252,15 +252,12 @@ export default function AssessPage() {
           assessmentId={result.assessmentId}
           scores={result.scores}
           summary={result.summary}
-          growthLevers={result.growthLevers}
           riskFlags={result.riskFlags}
           company={result.company || 'Your Company'}
           industry={result.industry}
           onDownloadPDF={handleDownloadPDF}
           onBookAudit={handleBookAudit}
-          onEmailReport={handleEmailReport}
           isDownloadingPDF={isDownloadingPDF}
-          isEmailingReport={isEmailingReport}
         />
       </ErrorBoundary>
     )
