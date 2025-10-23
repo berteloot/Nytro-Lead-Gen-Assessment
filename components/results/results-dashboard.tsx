@@ -25,7 +25,6 @@ interface ResultsDashboardProps {
   assessmentId: string
   scores: AssessmentScores
   summary: string
-  growthLevers: Lever[]
   riskFlags: string[]
   company: string
   industry?: string
@@ -40,7 +39,6 @@ export function ResultsDashboard({
   // assessmentId,
   scores,
   summary,
-  growthLevers = [],
   riskFlags = [],
   company,
   industry,
@@ -225,48 +223,6 @@ export function ResultsDashboard({
         </CardContent>
       </Card>
 
-      {/* Top Growth Levers */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Growth Opportunities</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {growthLevers.length > 0 ? growthLevers.map((lever, index) => (
-              <div key={index} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-lg">
-                    {index + 1}. {lever.name}
-                  </h4>
-                  <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceColor(lever.confidence)}`}>
-                      {lever.confidence} confidence
-                    </span>
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                      {index === 0 ? 'Start this week' : index === 1 ? 'Next 2 weeks' : 'Next month'}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-gray-700 mb-3">{lever.why}</p>
-                <div className="grid md:grid-cols-2 gap-3">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <p className="text-sm font-medium text-green-800 mb-1">Expected Impact</p>
-                    <p className="text-sm text-green-700">{lever.expectedImpact}</p>
-                  </div>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm font-medium text-blue-800 mb-1">First Step</p>
-                    <p className="text-sm text-blue-700">{lever.firstStep}</p>
-                  </div>
-                </div>
-              </div>
-            )) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>No prioritized growth levers yet.</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Risk Flags */}
       {riskFlags.length > 0 && (
