@@ -2,13 +2,13 @@ export interface RecommendationInput {
   company: string;
   industry: string;
   scores: {
-    inbound: number;
-    outbound: number;
-    content: number;
-    paid: number;
-    nurture: number;
-    infra: number;
-    attr: number;
+    inbound: number | null;
+    outbound: number | null;
+    content: number | null;
+    paid: number | null;
+    nurture: number | null;
+    infra: number | null;
+    attr: number | null;
     overall: number;
   };
   gaps: string[];

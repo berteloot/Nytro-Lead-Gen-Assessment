@@ -521,11 +521,10 @@ function CalibrationStep({
             className="w-full p-3 border rounded-lg"
           >
             <option value="">Select rate</option>
-            <option value="0-5">0-5%</option>
-            <option value="6-10">6-10%</option>
-            <option value="11-15">11-15%</option>
-            <option value="16-20">16-20%</option>
-            <option value="20+">20%+</option>
+            <option value="<10">Less than 10%</option>
+            <option value="10-25">10-25%</option>
+            <option value="25-40">25-40%</option>
+            <option value="40+">40%+</option>
           </select>
         </div>
         
@@ -537,10 +536,9 @@ function CalibrationStep({
             className="w-full p-3 border rounded-lg"
           >
             <option value="">Select cycle length</option>
-            <option value="0-30">0-30 days</option>
-            <option value="31-60">31-60 days</option>
-            <option value="61-90">61-90 days</option>
-            <option value="91-180">91-180 days</option>
+            <option value="<30">Less than 30 days</option>
+            <option value="30-90">30-90 days</option>
+            <option value="90-180">90-180 days</option>
             <option value="180+">180+ days</option>
           </select>
         </div>
@@ -649,7 +647,7 @@ function SimpleQuestion({
   const handlePresentChange = (present: boolean) => {
     onChange({
       present,
-      maturity: present ? null : 0,
+      maturity: present ? null as unknown as number : 0,
       applicable: true
     });
   };
@@ -708,12 +706,13 @@ function SimpleQuestion({
               How well do you do this? <span className="text-red-500">*</span>
             </label>
             <select 
-              value={value.maturity || ''}
+              value={value.maturity ?? ''}
               onChange={(e) => handleMaturityChange(Number(e.target.value))}
               className={`text-sm p-2 border rounded w-full max-w-xs ${value.maturity === null ? 'border-red-300' : ''}`}
               required
+              autoFocus
             >
-              <option value="">Select maturity level</option>
+              <option value="" disabled>Select maturity</option>
               <option value={1}>Basic - Ad-hoc/inconsistent</option>
               <option value={2}>Consistent - Defined process</option>
               <option value={3}>Advanced - Well-optimized</option>

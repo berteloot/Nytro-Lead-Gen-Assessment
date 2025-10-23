@@ -46,13 +46,13 @@ export interface AssessmentResponses {
 }
 
 export interface AssessmentScores {
-  inbound: number;
-  outbound: number;
-  content: number;
-  paid: number;
-  nurture: number;
-  infra: number;
-  attr: number;
+  inbound: number | null;
+  outbound: number | null;
+  content: number | null;
+  paid: number | null;
+  nurture: number | null;
+  infra: number | null;
+  attr: number | null;
   overall: number;
   outcome: 'Foundation' | 'Momentum' | 'Optimization';
   prerequisites: string[];
@@ -94,38 +94,42 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   
   const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number | null; applicable?: boolean }> = {}, leverWeights: Record<string, number>, moduleName: string) => {
     console.log(`Scoring ${moduleName}:`, answers);
-    let s = 0, maxApplicable = 0;
     
-    for (const k of Object.keys(leverWeights)) {
-      const w = leverWeights[k] ?? 0;
+    // Filter to applicable levers only
+    const applicableLevers = Object.entries(leverWeights).filter(([k, w]) => {
       const response = answers?.[k];
-      
-      // Skip if not applicable
-      if (response?.applicable === false) {
-        continue;
-      }
-      
-      // Only count applicable levers in denominator
-      maxApplicable += w;
-      
+      return response?.applicable !== false;
+    });
+    
+    if (applicableLevers.length === 0) {
+      console.log(`${moduleName}: no applicable levers, skipping`);
+      return null; // Skip module if no applicable levers
+    }
+    
+    // Calculate denominator (sum of applicable weights)
+    const denominator = applicableLevers.reduce((sum, [k, w]) => sum + w, 0);
+    
+    // Calculate numerator (sum of weighted maturity scores)
+    const numerator = applicableLevers.reduce((sum, [k, w]) => {
+      const response = answers?.[k];
       const present = response?.present ? 1 : 0;
-      const maturityRaw = response?.maturity;
-      const maturity = typeof maturityRaw === 'number' ? maturityRaw : 0; // 0..3
+      const maturity = response?.maturity ?? 0;
       
       // Only score if present and maturity is set (not null)
       if (present && maturity !== null && maturity > 0) {
         const maturityMultiplier = maturityWeights[Math.min(maturity, 3)] || 0;
         const score = maturityMultiplier * w;
-        s += score;
         console.log(`  ${k}: present=${present}, maturity=${maturity}, multiplier=${maturityMultiplier}, weight=${w}, score=${score}`);
+        return sum + score;
       } else if (present && maturity === null) {
         console.warn(`${moduleName}.${k}: marked present but maturity not set`);
       }
-    }
+      return sum;
+    }, 0);
     
     // Normalize against applicable weights only
-    const finalScore = maxApplicable > 0 ? Math.round((s / maxApplicable) * 100) : 0;
-    console.log(`${moduleName} final score: ${finalScore} (applicable weight: ${maxApplicable})`);
+    const finalScore = denominator > 0 ? Math.round((numerator / denominator) * 100) : 0;
+    console.log(`${moduleName} final score: ${finalScore} (applicable weight: ${denominator})`);
     return finalScore;
   };
 
@@ -180,16 +184,21 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
     ctaTracking: 3    // Conversion optimization (medium impact)
   }, 'attr');
 
-  const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
-  const overall = Math.round(
-    (inbound * weights.inbound + 
-     outbound * weights.outbound + 
-     content * weights.content +
-     paid * weights.paid + 
-     nurture * weights.nurture + 
-     infra * weights.infra + 
-     attr * weights.attr) / totalWeight
-  );
+  // Calculate overall score as weighted average of applicable modules only
+  const moduleScores = [
+    { score: inbound, weight: weights.inbound },
+    { score: outbound, weight: weights.outbound },
+    { score: content, weight: weights.content },
+    { score: paid, weight: weights.paid },
+    { score: nurture, weight: weights.nurture },
+    { score: infra, weight: weights.infra },
+    { score: attr, weight: weights.attr }
+  ].filter(m => m.score !== null);
+  
+  const totalWeight = moduleScores.reduce((sum, m) => sum + m.weight, 0);
+  const overall = moduleScores.length > 0 ? Math.round(
+    moduleScores.reduce((sum, m) => sum + ((m.score || 0) * m.weight), 0) / totalWeight
+  ) : 0;
 
   // Determine outcome band - tightened ranges
   let outcome: 'Foundation' | 'Momentum' | 'Optimization';
@@ -206,7 +215,7 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   const risks: string[] = [];
 
   // Hard prerequisite checks
-  if (infra < 40) {
+  if ((infra || 0) < 40) {
     prerequisites.push('Marketing infrastructure needs improvement before advanced tactics');
   }
   if (responses.outbound?.deliverability?.present && (responses.outbound.deliverability.maturity || 0) < 2) {
@@ -261,7 +270,7 @@ export function getTopGrowthLevers(scores: AssessmentScores): string[] {
 
   // Sort by score (ascending) and return the 3 lowest scoring modules
   return moduleScores
-    .sort((a, b) => a.score - b.score)
+    .sort((a, b) => (a.score || 0) - (b.score || 0))
     .slice(0, 3)
     .map(module => module.name);
 }
@@ -360,6 +369,7 @@ export function computeStructuredGaps(responses: AssessmentResponses, _scores: A
           const present = response.present || false;
           const maturity = response.maturity || 0;
           const multiplier = maturityWeights[Math.min(maturity, 3)] || 0;
+          // Impact = weight × (1 - maturityMultiplier)
           const computedImpact = weight * (1 - multiplier);
           
           structuredGaps.push({
@@ -435,7 +445,7 @@ export function fallbackLeversFromGaps(scores: AssessmentScores, responses: Asse
       { module: 'nurture', score: scores.nurture },
       { module: 'infra', score: scores.infra },
       { module: 'attr', score: scores.attr }
-    ].sort((a, b) => a.score - b.score);
+    ].sort((a, b) => (a.score || 0) - (b.score || 0));
     
     return sortedModules.slice(0, 3).map(item => ({
       name: getModuleDisplayName(item.module),

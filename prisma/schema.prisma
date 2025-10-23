@@ -26,14 +26,14 @@ model Assessment {
   companySize    String?
   // raw response payloads per module for transparency and re-scoring
   responses      Json
-  // normalized sub-scores 0-100 by dimension
-  scoreInbound   Int      @default(0)
-  scoreOutbound  Int      @default(0)
-  scoreContent   Int      @default(0)
-  scorePaid      Int      @default(0)
-  scoreNurture   Int      @default(0)
-  scoreInfra     Int      @default(0) // stack, data, integrations
-  scoreAttribution Int    @default(0)
+  // normalized sub-scores 0-100 by dimension (null if module not applicable)
+  scoreInbound   Int?
+  scoreOutbound  Int?
+  scoreContent   Int?
+  scorePaid      Int?
+  scoreNurture   Int?
+  scoreInfra     Int? // stack, data, integrations
+  scoreAttribution Int?
   scoreOverall   Int      @default(0)
   growthLevers   Json     // array of recommended levers with confidence
   riskFlags      Json     // integration gaps, compliance, deliverability

@@ -167,11 +167,11 @@ export function ResultsDashboard({
               <div className="bg-green-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-green-800 mb-2">Your Strengths</h4>
                 <p className="text-sm text-green-700">
-                  {scores.overall < 20 ? 'You\'re taking the first step by completing this assessment' : 
-                   scores.overall < 40 ? 'You have some basic systems in place' :
-                   scores.paid > scores.overall ? 'Strong paid advertising capabilities' : ''}
-                  {scores.nurture > scores.overall ? 'Effective lead nurturing processes' : ''}
-                  {scores.attr > scores.overall ? 'Good attribution and analytics setup' : ''}
+                  {scores.overall < 20 ? 'You\'re taking the first step by completing this assessment' :                                                
+                   scores.overall < 40 ? 'You have some basic systems in place' :                                                                       
+                   (scores.paid || 0) > scores.overall ? 'Strong paid advertising capabilities' : ''}                                                          
+                  {(scores.nurture || 0) > scores.overall ? 'Effective lead nurturing processes' : ''}                                                          
+                  {(scores.attr || 0) > scores.overall ? 'Good attribution and analytics setup' : ''}
                 </p>
               </div>
               <div className="bg-orange-50 p-4 rounded-lg">
@@ -179,9 +179,9 @@ export function ResultsDashboard({
                 <p className="text-sm text-orange-700">
                   {scores.overall < 20 ? 'Focus on building foundational lead generation systems' :
                    scores.overall < 40 ? 'Strengthen your existing processes and add new channels' :
-                   scores.inbound < 30 ? 'Inbound marketing could drive organic growth' : ''}
-                  {scores.outbound < 30 ? 'Outbound sales can expand market reach' : ''}
-                  {scores.content < 30 ? 'Content strategy needs strengthening' : ''}
+                   (scores.inbound || 0) < 30 ? 'Inbound marketing could drive organic growth' : ''}
+                  {(scores.outbound || 0) < 30 ? 'Outbound sales can expand market reach' : ''}
+                  {(scores.content || 0) < 30 ? 'Content strategy needs strengthening' : ''}
                 </p>
               </div>
             </div>

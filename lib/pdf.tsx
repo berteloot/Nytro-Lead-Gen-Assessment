@@ -167,13 +167,13 @@ interface AssessmentData {
     email: string;
   };
   industry?: string;
-  scoreInbound: number;
-  scoreOutbound: number;
-  scoreContent: number;
-  scorePaid: number;
-  scoreNurture: number;
-  scoreInfra: number;
-  scoreAttribution: number;
+  scoreInbound: number | null;
+  scoreOutbound: number | null;
+  scoreContent: number | null;
+  scorePaid: number | null;
+  scoreNurture: number | null;
+  scoreInfra: number | null;
+  scoreAttribution: number | null;
   scoreOverall: number;
   growthLevers: Array<{
     name: string;
@@ -193,23 +193,37 @@ export function AssessmentPdf({ assessment }: { assessment: AssessmentData }) {
     return '#dc2626'; // red
   };
 
-  const ScoreRow = ({ label, score }: { label: string; score: number }) => (
-    <View style={styles.scoreRow}>
-      <Text style={styles.scoreLabel}>{label}</Text>
-      <Text style={styles.scoreValue}>{score}/100</Text>
-      <View style={styles.scoreBar}>
-        <View 
-          style={[
-            styles.scoreFill, 
-            { 
-              width: `${score}%`, 
-              backgroundColor: getScoreColor(score) 
-            }
-          ]} 
-        />
+  const ScoreRow = ({ label, score }: { label: string; score: number | null }) => {
+    if (score === null) {
+      return (
+        <View style={styles.scoreRow}>
+          <Text style={styles.scoreLabel}>{label}</Text>
+          <Text style={styles.scoreValue}>N/A</Text>
+          <View style={styles.scoreBar}>
+            <View style={[styles.scoreFill, { width: '0%', backgroundColor: '#9CA3AF' }]} />
+          </View>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={styles.scoreRow}>
+        <Text style={styles.scoreLabel}>{label}</Text>
+        <Text style={styles.scoreValue}>{score}/100</Text>
+        <View style={styles.scoreBar}>
+          <View 
+            style={[
+              styles.scoreFill, 
+              { 
+                width: `${score}%`, 
+                backgroundColor: getScoreColor(score) 
+              }
+            ]} 
+          />
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <Document>
