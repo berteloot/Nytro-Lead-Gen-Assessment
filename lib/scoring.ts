@@ -54,6 +54,9 @@ export interface AssessmentScores {
   infra: number;
   attr: number;
   overall: number;
+  outcome: 'Foundation' | 'Momentum' | 'Optimization';
+  prerequisites: string[];
+  risks: string[];
 }
 
 export function scoreAssessment(responses: AssessmentResponses): AssessmentScores {
@@ -78,6 +81,9 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
     attr: 5           // Important for optimization
   };
 
+  // Maturity weight multipliers: 0=not present, 1=basic, 2=consistent, 3=advanced
+  const maturityWeights = [0, 0.5, 0.75, 1.0];
+  
   const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number }> = {}, leverWeights: Record<string, number>, moduleName: string) => {
     console.log(`Scoring ${moduleName}:`, answers);
     let s = 0, max = 0;
@@ -85,72 +91,74 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
       const w = leverWeights[k] ?? 0;
       const present = answers?.[k]?.present ? 1 : 0;
       const maturityRaw = answers?.[k]?.maturity;
-      const maturity = typeof maturityRaw === 'number' ? maturityRaw : 0; // 0..5
+      const maturity = typeof maturityRaw === 'number' ? maturityRaw : 0; // 0..3
       
       // Validation: warn if present=true but maturity=0
       if (present && maturity === 0) {
         console.warn(`${moduleName}.${k}: marked present but maturity is 0`);
       }
       
-      const score = present * (Math.min(Math.max(maturity, 0), 5) / 5) * w;
+      // Use maturity weight multiplier instead of linear scaling
+      const maturityMultiplier = maturityWeights[Math.min(maturity, 3)] || 0;
+      const score = present * maturityMultiplier * w;
       s += score;
       max += w;
-      console.log(`  ${k}: present=${present}, maturity=${maturity}, weight=${w}, score=${score}`);
+      console.log(`  ${k}: present=${present}, maturity=${maturity}, multiplier=${maturityMultiplier}, weight=${w}, score=${score}`);
     }
     const finalScore = Math.round((s / Math.max(max, 1)) * 100);
     console.log(`${moduleName} final score: ${finalScore}`);
     return finalScore;
   };
 
-  // Score inbound marketing (without events since we don't ask about them)
+  // Score inbound marketing with pipeline impact weights
   const inbound = moduleScore(responses.inbound, { 
-    seo: 4,           // SEO & Content Marketing
-    leadMagnets: 3,   // Lead Magnets
-    webinars: 3       // Webinars & Events
+    seo: 3,           // SEO & Content Marketing (medium impact)
+    leadMagnets: 4,   // Lead capture (high impact)
+    webinars: 3       // Webinars & Events (medium impact)
   }, 'inbound');
 
   const outbound = moduleScore(responses.outbound, { 
-    sequences: 5,     // Core outbound capability
-    deliverability: 4, // Critical for sequences to work
-    linkedin: 3,      // Primary B2B channel
-    phone: 2          // Lower importance in 2025
+    sequences: 5,     // Core outbound capability (high impact)
+    deliverability: 6, // Critical prerequisite (highest impact)
+    linkedin: 4,      // Primary B2B channel (high impact)
+    phone: 2          // Lower importance in 2025 (low impact)
   }, 'outbound');
 
-  // Score content independently using actual content responses
+  // Score content with pipeline impact weights
   const content = moduleScore(responses.content, {
-    blog: 3,          // Content foundation
-    caseStudies: 4,   // High-value content
-    moFuAssets: 3,    // Middle-of-funnel content
-    boFuAssets: 3,    // Bottom-of-funnel content
-    distribution: 2   // Content distribution
+    blog: 2,          // Content foundation (low impact)
+    caseStudies: 5,   // BOFU content (high impact)
+    moFuAssets: 3,    // Middle-of-funnel content (medium impact)
+    boFuAssets: 5,    // Bottom-of-funnel content (high impact)
+    distribution: 2   // Content distribution (low impact)
   }, 'content');
 
   const paid = moduleScore(responses.paid, { 
-    ppc: 4,           // High-intent traffic
-    linkedinLeadGen: 4, // Critical for B2B
-    retargeting: 3,   // High ROI channel
-    socialAds: 2,     // Brand awareness + lead gen
-    abm: 2           // Account-based marketing
+    ppc: 4,           // High-intent traffic (high impact)
+    linkedinLeadGen: 5, // Critical for B2B (high impact)
+    retargeting: 4,   // High ROI channel (high impact)
+    socialAds: 2,     // Brand awareness (low impact)
+    abm: 3           // Account-based marketing (medium impact)
   }, 'paid');
 
   const nurture = moduleScore(responses.nurture, { 
-    drip: 4,          // Essential for lead conversion
-    scoringTriggers: 4, // Critical for lead qualification
-    intentSignals: 3,  // Buying signals are gold
-    reactivation: 2   // Re-engaging cold leads
+    drip: 5,          // Essential for lead conversion (high impact)
+    scoringTriggers: 6, // Critical for lead qualification (highest impact)
+    intentSignals: 4,  // Buying signals (high impact)
+    reactivation: 3   // Re-engaging cold leads (medium impact)
   }, 'nurture');
 
   const infra = moduleScore(responses.infra, { 
-    crm: 4,           // Single source of truth
-    marketingAutomation: 4, // Essential for scaling
-    enrichment: 3,    // Better data = better targeting
-    realtimeSync: 2   // Nice to have
+    crm: 6,           // Single source of truth (highest impact)
+    marketingAutomation: 5, // Essential for scaling (high impact)
+    enrichment: 3,    // Better data (medium impact)
+    realtimeSync: 2   // Nice to have (low impact)
   }, 'infra');
 
   const attr = moduleScore(responses.attr, { 
-    multiTouch: 4,    // Critical for understanding customer journey
-    dashboards: 3,    // Data visibility
-    ctaTracking: 2    // Conversion optimization
+    multiTouch: 6,    // Critical for understanding customer journey (highest impact)
+    dashboards: 4,    // Data visibility (high impact)
+    ctaTracking: 3    // Conversion optimization (medium impact)
   }, 'attr');
 
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
@@ -164,15 +172,57 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
      attr * weights.attr) / totalWeight
   );
 
+  // Determine outcome band
+  let outcome: 'Foundation' | 'Momentum' | 'Optimization';
+  if (overall < 50) {
+    outcome = 'Foundation';
+  } else if (overall < 75) {
+    outcome = 'Momentum';
+  } else {
+    outcome = 'Optimization';
+  }
+
+  // Sanity checks for prerequisites and risks
+  const prerequisites: string[] = [];
+  const risks: string[] = [];
+
+  // Prerequisite checks
+  if (responses.outbound?.deliverability?.present && responses.outbound.deliverability.maturity < 2) {
+    prerequisites.push('Email deliverability needs improvement before scaling outbound');
+  }
+  if (responses.infra?.crm?.present && responses.infra.crm.maturity < 2) {
+    prerequisites.push('CRM hygiene needs improvement before advanced automation');
+  }
+  if (responses.attr?.multiTouch?.present && responses.attr.multiTouch.maturity < 2) {
+    prerequisites.push('Attribution tracking needs improvement before scaling spend');
+  }
+
+  // Risk checks
+  if (responses.paid?.ppc?.present && responses.paid.ppc.maturity >= 2 && 
+      responses.content?.boFuAssets?.present && responses.content.boFuAssets.maturity < 2) {
+    risks.push('Paid traffic may leak without strong bottom-of-funnel content');
+  }
+  if (responses.nurture?.scoringTriggers?.present && responses.nurture.scoringTriggers.maturity < 2 &&
+      responses.nurture?.drip?.present && responses.nurture.drip.maturity >= 2) {
+    risks.push('Lead scoring needs improvement to optimize nurture sequences');
+  }
+  if (responses.outbound?.sequences?.present && responses.outbound.sequences.maturity >= 2 &&
+      responses.outbound?.deliverability?.present && responses.outbound.deliverability.maturity < 2) {
+    risks.push('Outbound sequences may underperform without proper deliverability');
+  }
+
   return {
     inbound,
     outbound,
-    content, // Content is included in overall calculation
+    content,
     paid,
     nurture,
     infra,
     attr,
-    overall
+    overall,
+    outcome,
+    prerequisites,
+    risks
   };
 }
 

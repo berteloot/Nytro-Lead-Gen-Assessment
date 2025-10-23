@@ -519,7 +519,7 @@ function CompanyStep({
   )
 }
 
-// Simplified question component (no maturity scoring)
+// Enhanced question component with explicit maturity capture
 function SimpleQuestion({ 
   label, 
   description,
@@ -531,6 +531,20 @@ function SimpleQuestion({
   value?: { present: boolean; maturity: number }
   onChange: (data: { present: boolean; maturity: number }) => void 
 }) {
+  const handlePresentChange = (present: boolean) => {
+    onChange({
+      present,
+      maturity: present ? 1 : 0 // Default to basic (1) when checked, 0 when unchecked
+    });
+  };
+
+  const handleMaturityChange = (maturity: number) => {
+    onChange({
+      present: true,
+      maturity
+    });
+  };
+
   return (
     <div className="border rounded-lg p-4 space-y-3">
       <div>
@@ -540,19 +554,33 @@ function SimpleQuestion({
         )}
       </div>
       
-      <div className="flex items-center space-x-4">
+      <div className="space-y-3">
         <label className="flex items-center space-x-2">
           <input
             type="checkbox"
             checked={value?.present || false}
-            onChange={(e) => onChange({
-              present: e.target.checked,
-              maturity: 2 // Default to basic implementation
-            })}
+            onChange={(e) => handlePresentChange(e.target.checked)}
             className="rounded"
           />
           <span className="text-sm">We do this</span>
         </label>
+        
+        {value?.present && (
+          <div className="ml-6 space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              How well do you do this?
+            </label>
+            <select 
+              value={value.maturity || 1}
+              onChange={(e) => handleMaturityChange(Number(e.target.value))}
+              className="text-sm p-2 border rounded w-full max-w-xs"
+            >
+              <option value={1}>Basic - Just getting started</option>
+              <option value={2}>Consistent - Running regularly</option>
+              <option value={3}>Advanced - Well-optimized</option>
+            </select>
+          </div>
+        )}
       </div>
     </div>
   )

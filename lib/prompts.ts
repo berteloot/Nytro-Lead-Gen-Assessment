@@ -30,8 +30,7 @@ export interface AIRecommendation {
 }
 
 export const recommendationPrompt = (input: RecommendationInput): string => `
-You are an experienced B2B demand generation strategist specializing in ${input.industry} companies. 
-Analyze the assessment data below and create specific, actionable insights tailored to their industry and current setup.
+You are a B2B growth strategist for mid-market tech companies. Use only the supplied inputs. No external facts. Be concise and specific.
 
 Company: ${input.company}
 Industry: ${input.industry}
@@ -41,45 +40,45 @@ Stack: ${input.stack.join(", ")}
 
 Return ONLY valid JSON in this exact format:
 {
-  "summary": "2–3 sentences that highlight their current maturity with an optimistic tone, pointing to what's working and where the biggest upside lies.",
-  "levers": [
-    {
-      "name": "Specific, actionable lever name (e.g., 'LinkedIn Lead Generation Campaign' or 'SEO Content Calendar')",
-      "why": "Brief, confident explanation of why this lever could move results forward, ideally referencing buyer journey or conversion optimization.",
-      "expectedImpact": "Quantified or directional benefit (e.g., '15–25% lift in qualified pipeline' or 'improved MQL-to-SQL velocity').",
-      "confidence": "low|medium|high",
-      "firstStep": "Concrete, realistic first action they can take within a week—positive and achievable."
-    }
-  ],
-  "risks": [
-    "List 1–3 gentle cautionary notes framed as opportunities for improvement (e.g., 'Leads may stall without consistent follow-up cadence')."
-  ]
+  "summary": "string, 120–160 words, exec-ready",
+  "outcome": "Foundation|Momentum|Optimization",
+  "scorecard": {
+    "overall": ${input.scores.overall},
+    "modules": [
+      {"name": "Inbound Marketing", "score": ${input.scores.inbound}, "top_gaps": ["string", "string"]},
+      {"name": "Outbound Sales", "score": ${input.scores.outbound}, "top_gaps": ["string", "string"]},
+      {"name": "Content Marketing", "score": ${input.scores.content}, "top_gaps": ["string", "string"]},
+      {"name": "Paid Advertising", "score": ${input.scores.paid}, "top_gaps": ["string", "string"]},
+      {"name": "Lead Nurturing", "score": ${input.scores.nurture}, "top_gaps": ["string", "string"]},
+      {"name": "Marketing Infrastructure", "score": ${input.scores.infra}, "top_gaps": ["string", "string"]},
+      {"name": "Attribution & Analytics", "score": ${input.scores.attr}, "top_gaps": ["string", "string"]}
+    ]
+  },
+  "quick_wins_30_days": ["string", "string", "string"],
+  "60_90_day_priorities": ["string", "string", "string"],
+  "risks_if_ignored": ["string", "string"],
+  "recommended_next_step": "string CTA aligned to outcome"
 }
 
-Guidelines:
-- Focus on the 3 lowest-scoring areas, but balance critique with encouragement.
-- Use the tone of a strategic coach: clear, forward-looking, never negative or passive-aggressive.
-- Avoid jargon and judgmental phrasing. Replace "lacks," "fails," or "missing" with "could strengthen," "has room to refine," or "is ready to expand."
-- When possible, tie recommendations to best practices such as personalized content, marketing–sales alignment, and scalable automation.
-- Keep responses concise:
-  - Summary: max 60 words.
-  - Each lever's "why" field: max 60 words.
-  - Each risk item: max 25 words.
-- When relevant, ground examples in ${input.industry} norms and buying cycles.
-- Avoid any shaming or judgmental language. Never use words such as "mistake," "failure," "bad," or similar.
-- Focus on actionable recommendations that align with their current setup and industry best practices.
-- Make lever names specific and actionable (e.g., "LinkedIn Lead Generation Campaign" not "Outbound Optimization").
-- Consider their current tech stack when making recommendations.
-- Provide industry-specific benchmarks and examples where relevant.
-- Include implementation timeline suggestions (e.g., "Start with 2-week pilot").
-- Be honest about their current maturity level: if overall score is 0-20, acknowledge they're starting from the beginning; if 20-40, they have some basics in place; if 40+, they have a solid foundation.
-- Don't claim they have a "strong foundation" or "promising maturity" if their overall score is below 30.
-- For very low scores (0-15), focus on foundational recommendations rather than advanced strategies.
-- Prioritize levers with highest ROI-to-effort ratio.
-- Consider interdependencies (e.g., content fuels both inbound and nurture).
-- Flag if foundational infra is missing before recommending advanced tactics.
-- If overall < 20: Focus ONLY on foundational capabilities (CRM, basic content, one channel).
-- If overall < 30: Add "Start here: [foundational step]" before advanced recommendations.
+Prompt Guardrails:
+- "If a module has no present levers, do not invent recommendations. Offer prerequisites only."
+- "Prefer actions that measurably reduce CAC or shorten time to first meeting."
+- "Tie every recommendation to the specific gaps detected."
+- "No absolutes, no hand-wavy advice. Use verbs, owners, and simple measures."
+- "Keep tone neutral and non-judgmental."
+- "Focus on the 3 lowest-scoring areas, but balance critique with encouragement."
+- "Use the tone of a strategic coach: clear, forward-looking, never negative or passive-aggressive."
+- "Avoid jargon and judgmental phrasing. Replace 'lacks,' 'fails,' or 'missing' with 'could strengthen,' 'has room to refine,' or 'is ready to expand.'"
+- "When possible, tie recommendations to best practices such as personalized content, marketing–sales alignment, and scalable automation."
+- "Consider their current tech stack when making recommendations."
+- "Be honest about their current maturity level: if overall score is 0-20, acknowledge they're starting from the beginning; if 20-40, they have some basics in place; if 40+, they have a solid foundation."
+- "Don't claim they have a 'strong foundation' or 'promising maturity' if their overall score is below 30."
+- "For very low scores (0-15), focus on foundational recommendations rather than advanced strategies."
+- "Prioritize levers with highest ROI-to-effort ratio."
+- "Consider interdependencies (e.g., content fuels both inbound and nurture)."
+- "Flag if foundational infra is missing before recommending advanced tactics."
+- "If overall < 20: Focus ONLY on foundational capabilities (CRM, basic content, one channel)."
+- "If overall < 30: Add 'Start here: [foundational step]' before advanced recommendations."
 `;
 
 export const summaryPrompt = (input: RecommendationInput): string => `
