@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
     // Check if SendGrid is configured
     console.log('SendGrid API Key exists:', !!process.env.SENDGRID_API_KEY);
     console.log('From Email:', process.env.FROM_EMAIL);
+    console.log('Assessment ID:', assessmentId);
+    console.log('Email:', email);
     
     if (!process.env.SENDGRID_API_KEY) {
       console.error('SENDGRID_API_KEY is not configured')
@@ -95,9 +97,16 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Sending comprehensive HTML email report...');
+    console.log('Email message:', {
+      to: msg.to,
+      from: msg.from,
+      subject: msg.subject,
+      htmlLength: msg.html?.length
+    });
 
     await sgMail.send(msg)
 
+    console.log('Email sent successfully');
     return NextResponse.json({ 
       success: true, 
       message: 'Report sent successfully' 
@@ -105,8 +114,23 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Email sending error:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    })
+    
+    // Check if it's a SendGrid specific error
+    if (error && typeof error === 'object' && 'response' in error) {
+      const sgError = error as any;
+      console.error('SendGrid error response:', sgError.response?.body);
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to send email' },
+      { 
+        error: 'Failed to send email',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
