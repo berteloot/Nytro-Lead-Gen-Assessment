@@ -93,11 +93,23 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   };
 
   const moduleScore = (levers: {weight: number; present: boolean; applicable: boolean}[]) => {
-    const denom = levers.filter(l => l.applicable).reduce((s,l) => s + l.weight, 0);
-    const numer = levers
-      .filter(l => l.applicable)
-      .reduce((s,l) => s + l.weight * (l.present ? 1 : 0), 0);
-    return denom ? Math.round(100 * numer / denom) : null;
+    const applicableLevers = levers.filter(l => l.applicable);
+    if (applicableLevers.length === 0) return null;
+    
+    const denom = applicableLevers.reduce((s,l) => s + l.weight, 0);
+    const numer = applicableLevers.reduce((s,l) => s + l.weight * (l.present ? 1 : 0), 0);
+    
+    // Calculate percentage of applicable levers that are present
+    const presentCount = applicableLevers.filter(l => l.present).length;
+    const totalCount = applicableLevers.length;
+    const coverageScore = Math.round((presentCount / totalCount) * 100);
+    
+    // Weighted score based on importance
+    const weightedScore = denom ? Math.round((numer / denom) * 100) : 0;
+    
+    // Blend coverage and weighted scores for fairer assessment
+    // 60% coverage (how many levers they have) + 40% weighted (importance)
+    return Math.round((coverageScore * 0.6) + (weightedScore * 0.4));
   };
 
   // Score inbound marketing with pipeline impact weights
@@ -255,7 +267,6 @@ export function computeGapImpact(responses: AssessmentResponses, _scores: Assess
     attr: { multiTouch: 6, dashboards: 4, ctaTracking: 3 }
   };
 
-  const maturityWeights = [0, 0.5, 0.75, 1.0];
   const gaps: Array<{ module: string; lever: string; impact: number; maturity: number }> = [];
 
   // Calculate gaps for each module

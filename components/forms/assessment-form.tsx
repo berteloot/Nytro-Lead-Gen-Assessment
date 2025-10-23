@@ -226,8 +226,13 @@ function LeadGenStep({
       <div>
         <h3 className="text-lg font-semibold">How do you currently generate leads?</h3>
         <p className="text-sm text-gray-600 mt-2">
-          Check all that apply. We&apos;ll show you what you&apos;re missing.
+          Check all that apply. Be honest - we&apos;ll show you what you&apos;re missing and help you prioritize improvements.
         </p>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+          <p className="text-sm text-blue-800">
+            💡 <strong>Tip:</strong> Only check "We do this" if you have a consistent, repeatable process. If it&apos;s ad-hoc or experimental, leave it unchecked.
+          </p>
+        </div>
       </div>
       
       <div className="space-y-4">
@@ -366,6 +371,11 @@ function InfrastructureStep({
         <p className="text-sm text-gray-600 mt-2">
           Help us understand your tools and processes to give you better recommendations.
         </p>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
+          <p className="text-sm text-amber-800">
+            ⚠️ <strong>Important:</strong> Mark as "Not applicable" only if the lever truly doesn&apos;t fit your business model. This helps us give you more accurate scores.
+          </p>
+        </div>
       </div>
       
       <div className="space-y-4">
