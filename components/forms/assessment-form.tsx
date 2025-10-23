@@ -647,7 +647,7 @@ function SimpleQuestion({
   const handlePresentChange = (present: boolean) => {
     onChange({
       present,
-      maturity: present ? null as unknown as number : 0,
+      maturity: present ? null : 0,
       applicable: true
     });
   };
