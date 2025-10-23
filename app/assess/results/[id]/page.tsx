@@ -3,19 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { ResultsDashboard } from '@/components/results/results-dashboard'
+import { type AssessmentScores } from '@/lib/scoring'
 
 interface AssessmentResult {
   assessmentId: string
-  scores: {
-    inbound: number
-    outbound: number
-    content: number
-    paid: number
-    nurture: number
-    infra: number
-    attr: number
-    overall: number
-  }
+  scores: AssessmentScores
   summary: string
   growthLevers: Array<{
     name: string

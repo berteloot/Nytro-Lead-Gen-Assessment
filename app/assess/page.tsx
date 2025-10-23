@@ -4,7 +4,7 @@ import { useState } from 'react'
 // import { useRouter } from 'next/navigation'
 import { AssessmentForm } from '@/components/forms/assessment-form'
 import { ResultsDashboard } from '@/components/results/results-dashboard'
-import { type AssessmentResponses } from '@/lib/scoring'
+import { type AssessmentResponses, type AssessmentScores } from '@/lib/scoring'
 
 interface AssessmentData {
   email: string
@@ -16,16 +16,7 @@ interface AssessmentData {
 
 interface AssessmentResult {
   assessmentId: string
-  scores: {
-    inbound: number
-    outbound: number
-    content: number
-    paid: number
-    nurture: number
-    infra: number
-    attr: number
-    overall: number
-  }
+  scores: AssessmentScores
   summary: string
   growthLevers: Array<{
     name: string
