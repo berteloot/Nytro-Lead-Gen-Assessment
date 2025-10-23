@@ -25,23 +25,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if SendGrid is configured
+    console.log('=== Email Report Configuration Check ===');
+    console.log('Environment:', process.env.NODE_ENV);
     console.log('SendGrid API Key exists:', !!process.env.SENDGRID_API_KEY);
+    console.log('SendGrid API Key length:', process.env.SENDGRID_API_KEY?.length || 0);
     console.log('From Email:', process.env.FROM_EMAIL);
     console.log('Assessment ID:', assessmentId);
     console.log('Email:', email);
     
+    // Check for missing environment variables
+    const missingVars = [];
     if (!process.env.SENDGRID_API_KEY) {
-      console.error('SENDGRID_API_KEY is not configured')
-      return NextResponse.json(
-        { error: 'Email service is not configured. Please contact support.' },
-        { status: 500 }
-      )
+      missingVars.push('SENDGRID_API_KEY');
     }
-
     if (!process.env.FROM_EMAIL) {
-      console.error('FROM_EMAIL is not configured')
+      missingVars.push('FROM_EMAIL');
+    }
+    
+    if (missingVars.length > 0) {
+      console.error('Missing environment variables:', missingVars);
+      console.error('Please configure these variables in your Render dashboard:');
+      missingVars.forEach(varName => {
+        console.error(`- ${varName}`);
+      });
+      
       return NextResponse.json(
-        { error: 'Email service is not configured. Please contact support.' },
+        { 
+          error: 'Email service is not configured. Missing environment variables.',
+          missing: missingVars,
+          instructions: 'Please configure SENDGRID_API_KEY and FROM_EMAIL in your Render dashboard.'
+        },
         { status: 500 }
       )
     }
@@ -104,13 +117,34 @@ export async function POST(request: NextRequest) {
       htmlLength: msg.html?.length
     });
 
-    await sgMail.send(msg)
-
-    console.log('Email sent successfully');
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Report sent successfully' 
-    })
+    try {
+      await sgMail.send(msg)
+      console.log('Email sent successfully');
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Report sent successfully' 
+      })
+    } catch (sendGridError: unknown) {
+      console.error('SendGrid API error:', sendGridError);
+      const errorMessage = sendGridError instanceof Error ? sendGridError.message : 'Unknown error'
+      const errorCode = (sendGridError as { code?: string })?.code || 'unknown'
+      const errorResponse = (sendGridError as { response?: { body?: unknown } })?.response?.body || null
+      
+      console.error('SendGrid error details:', {
+        message: errorMessage,
+        code: errorCode,
+        response: errorResponse
+      });
+      
+      return NextResponse.json(
+        { 
+          error: 'Failed to send email via SendGrid',
+          details: errorMessage,
+          code: errorCode
+        },
+        { status: 500 }
+      )
+    }
 
   } catch (error) {
     console.error('Email sending error:', error)
