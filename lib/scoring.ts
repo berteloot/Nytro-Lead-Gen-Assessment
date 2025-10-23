@@ -81,7 +81,7 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
     attr: 5           // Important for optimization
   };
 
-  // Maturity weight multipliers: 0=not present, 1=basic, 2=consistent, 3=advanced
+  // Maturity weight multipliers: 0=not in place, 1=basic, 2=consistent, 3=advanced
   const maturityWeights = [0, 0.5, 0.75, 1.0];
   
   const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number }> = {}, leverWeights: Record<string, number>, moduleName: string) => {
@@ -172,7 +172,7 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
      attr * weights.attr) / totalWeight
   );
 
-  // Determine outcome band
+  // Determine outcome band - tightened ranges
   let outcome: 'Foundation' | 'Momentum' | 'Optimization';
   if (overall < 50) {
     outcome = 'Foundation';
@@ -186,7 +186,10 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   const prerequisites: string[] = [];
   const risks: string[] = [];
 
-  // Prerequisite checks
+  // Hard prerequisite checks
+  if (infra < 40) {
+    prerequisites.push('Marketing infrastructure needs improvement before advanced tactics');
+  }
   if (responses.outbound?.deliverability?.present && responses.outbound.deliverability.maturity < 2) {
     prerequisites.push('Email deliverability needs improvement before scaling outbound');
   }
@@ -248,15 +251,83 @@ export function computeGaps(scores: AssessmentScores): string[] {
   return getTopGrowthLevers(scores);
 }
 
-export function fallbackLeversFromGaps(scores: AssessmentScores) {
-  const gaps = computeGaps(scores);
-  return gaps.map(gap => ({
-    name: getModuleDisplayName(gap),
-    why: `This area shows room for improvement and could significantly impact your overall lead generation performance.`,
-    expectedImpact: '15-25% improvement in lead quality and conversion rates',
-    confidence: 'medium' as const,
-    firstStep: `Review your current ${getModuleDisplayName(gap).toLowerCase()} processes and identify quick wins.`
-  }));
+export function computeGapImpact(responses: AssessmentResponses, scores: AssessmentScores) {
+  const leverWeights = {
+    inbound: { seo: 3, leadMagnets: 4, webinars: 3 },
+    outbound: { sequences: 5, deliverability: 6, linkedin: 4, phone: 2 },
+    content: { blog: 2, caseStudies: 5, moFuAssets: 3, boFuAssets: 5, distribution: 2 },
+    paid: { ppc: 4, linkedinLeadGen: 5, retargeting: 4, socialAds: 2, abm: 3 },
+    nurture: { drip: 5, scoringTriggers: 6, intentSignals: 4, reactivation: 3 },
+    infra: { crm: 6, marketingAutomation: 5, enrichment: 3, realtimeSync: 2 },
+    attr: { multiTouch: 6, dashboards: 4, ctaTracking: 3 }
+  };
+
+  const maturityWeights = [0, 0.5, 0.75, 1.0];
+  const gaps: Array<{ module: string; lever: string; impact: number; maturity: number }> = [];
+
+  // Calculate gaps for each module
+  Object.entries(leverWeights).forEach(([module, levers]) => {
+    Object.entries(levers).forEach(([lever, weight]) => {
+      const moduleResponses = responses[module as keyof AssessmentResponses];
+      if (moduleResponses) {
+        const response = (moduleResponses as any)[lever];
+        if (response) {
+          const maturityMultiplier = maturityWeights[Math.min(response.maturity || 0, 3)] || 0;
+          const impact = weight * (1 - maturityMultiplier);
+          if (impact > 0) {
+            gaps.push({
+              module,
+              lever,
+              impact,
+              maturity: response.maturity || 0
+            });
+          }
+        }
+      }
+    });
+  });
+
+  return gaps.sort((a, b) => b.impact - a.impact);
+}
+
+export function computeConfidence(responses: AssessmentResponses, calibration?: { monthlyLeads: string; meetingRate: string; salesCycle: string }) {
+  let answeredLevers = 0;
+  let totalLevers = 0;
+
+  // Count answered levers
+  Object.values(responses).forEach(module => {
+    if (module) {
+      Object.values(module).forEach(lever => {
+        totalLevers++;
+        if (lever && typeof lever === 'object' && 'present' in lever && lever.present) {
+          answeredLevers++;
+        }
+      });
+    }
+  });
+
+  const responseDensity = answeredLevers / Math.max(totalLevers, 1);
+  const hasCalibration = calibration && (calibration.monthlyLeads || calibration.meetingRate || calibration.salesCycle);
+  
+  if (responseDensity >= 0.7 && hasCalibration) return 'high';
+  if (responseDensity >= 0.5 || hasCalibration) return 'medium';
+  return 'low';
+}
+
+export function fallbackLeversFromGaps(scores: AssessmentScores, responses: AssessmentResponses, calibration?: { monthlyLeads: string; meetingRate: string; salesCycle: string }) {
+  const gaps = computeGapImpact(responses, scores);
+  const confidence = computeConfidence(responses, calibration);
+  
+  return gaps.slice(0, 3).map(gap => {
+    const impactPercent = Math.round((gap.impact / 6) * 100); // Normalize to percentage
+    return {
+      name: getLeverDisplayName(gap.module, gap.lever),
+      why: `This ${getLeverDisplayName(gap.module, gap.lever).toLowerCase()} shows significant room for improvement based on your current maturity level.`,
+      expectedImpact: `${impactPercent}% improvement in lead quality and conversion rates`,
+      confidence: confidence as 'low' | 'medium' | 'high',
+      firstStep: `Review your current ${getLeverDisplayName(gap.module, gap.lever).toLowerCase()} processes and identify quick wins.`
+    };
+  });
 }
 
 function getModuleDisplayName(module: string): string {
@@ -270,6 +341,55 @@ function getModuleDisplayName(module: string): string {
     attr: 'Attribution & Analytics'
   };
   return names[module] || module;
+}
+
+function getLeverDisplayName(module: string, lever: string): string {
+  const leverNames: Record<string, Record<string, string>> = {
+    inbound: {
+      seo: 'SEO & Content Marketing',
+      leadMagnets: 'Lead Magnets',
+      webinars: 'Webinars & Events'
+    },
+    outbound: {
+      sequences: 'Cold Email Campaigns',
+      deliverability: 'Email Deliverability',
+      linkedin: 'LinkedIn Outreach',
+      phone: 'Phone Outreach'
+    },
+    content: {
+      blog: 'Blog & SEO Content',
+      caseStudies: 'Case Studies & Success Stories',
+      moFuAssets: 'Middle-of-Funnel Content',
+      boFuAssets: 'Bottom-of-Funnel Content',
+      distribution: 'Content Distribution'
+    },
+    paid: {
+      ppc: 'Google & Bing Ads',
+      linkedinLeadGen: 'LinkedIn Lead Generation',
+      retargeting: 'Retargeting Campaigns',
+      socialAds: 'Social Media Ads',
+      abm: 'Account-Based Marketing'
+    },
+    nurture: {
+      drip: 'Email Sequences',
+      scoringTriggers: 'Lead Scoring',
+      intentSignals: 'Intent Signals',
+      reactivation: 'Lead Reactivation'
+    },
+    infra: {
+      crm: 'CRM System',
+      marketingAutomation: 'Marketing Automation',
+      enrichment: 'Data Enrichment',
+      realtimeSync: 'Real-time Data Sync'
+    },
+    attr: {
+      multiTouch: 'Multi-touch Attribution',
+      dashboards: 'Analytics Dashboard',
+      ctaTracking: 'CTA Tracking'
+    }
+  };
+  
+  return leverNames[module]?.[lever] || `${module} - ${lever}`;
 }
 
 export function extractStack(responses: AssessmentResponses): string[] {

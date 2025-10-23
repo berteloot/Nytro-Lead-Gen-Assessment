@@ -25,16 +25,32 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
     industry: '',
     companySize: '',
     responses: {} as AssessmentResponses,
+    calibration: {
+      monthlyLeads: '',
+      meetingRate: '',
+      salesCycle: ''
+    }
   })
   const [emailError, setEmailError] = useState<string>('')
 
-  const totalSteps = 3
+  const totalSteps = 4
 
   const updateFormData = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }))
+    if (field.startsWith('calibration.')) {
+      const calibrationField = field.split('.')[1]
+      setFormData(prev => ({
+        ...prev,
+        calibration: {
+          ...prev.calibration,
+          [calibrationField]: value,
+        },
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+      }))
+    }
     
     // Validate email in real-time
     if (field === 'email') {
@@ -79,6 +95,8 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
       case 2:
         return true // Infrastructure questions
       case 3:
+        return true // Calibration metrics
+      case 4:
         return formData.email && formData.company && formData.industry && !emailError // Email and company info at the end
       default:
         return false
@@ -143,6 +161,13 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
           )}
 
           {currentStep === 3 && (
+            <CalibrationStep 
+              calibration={formData.calibration}
+              updateFormData={updateFormData}
+            />
+          )}
+
+          {currentStep === 4 && (
             <CompanyStep 
               responses={formData.responses}
               onUpdate={updateResponses}
@@ -434,6 +459,79 @@ function InfrastructureStep({
   )
 }
 
+function CalibrationStep({ 
+  calibration,
+  updateFormData
+}: { 
+  calibration: {
+    monthlyLeads: string;
+    meetingRate: string;
+    salesCycle: string;
+  }
+  updateFormData: (field: string, value: string) => void
+}) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold">Help us calibrate your current performance</h3>
+        <p className="text-sm text-gray-600 mt-2">
+          These metrics help us provide more accurate recommendations tailored to your situation.
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-2">Monthly Inbound Leads (last 90 days)</label>
+          <select
+            value={calibration.monthlyLeads}
+            onChange={(e) => updateFormData('calibration.monthlyLeads', e.target.value)}
+            className="w-full p-3 border rounded-lg"
+          >
+            <option value="">Select range</option>
+            <option value="0-10">0-10 leads</option>
+            <option value="11-25">11-25 leads</option>
+            <option value="26-50">26-50 leads</option>
+            <option value="51-100">51-100 leads</option>
+            <option value="100+">100+ leads</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-2">Meeting Rate (last 90 days)</label>
+          <select
+            value={calibration.meetingRate}
+            onChange={(e) => updateFormData('calibration.meetingRate', e.target.value)}
+            className="w-full p-3 border rounded-lg"
+          >
+            <option value="">Select rate</option>
+            <option value="0-5">0-5%</option>
+            <option value="6-10">6-10%</option>
+            <option value="11-15">11-15%</option>
+            <option value="16-20">16-20%</option>
+            <option value="20+">20%+</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-2">Typical Sales Cycle Length</label>
+          <select
+            value={calibration.salesCycle}
+            onChange={(e) => updateFormData('calibration.salesCycle', e.target.value)}
+            className="w-full p-3 border rounded-lg"
+          >
+            <option value="">Select cycle length</option>
+            <option value="0-30">0-30 days</option>
+            <option value="31-60">31-60 days</option>
+            <option value="61-90">61-90 days</option>
+            <option value="91-180">91-180 days</option>
+            <option value="180+">180+ days</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CompanyStep({ 
   responses, 
   onUpdate,
@@ -575,9 +673,10 @@ function SimpleQuestion({
               onChange={(e) => handleMaturityChange(Number(e.target.value))}
               className="text-sm p-2 border rounded w-full max-w-xs"
             >
-              <option value={1}>Basic - Just getting started</option>
-              <option value={2}>Consistent - Running regularly</option>
-              <option value={3}>Advanced - Well-optimized</option>
+              <option value={0}>Not in place</option>
+              <option value={1}>Basic</option>
+              <option value={2}>Consistent</option>
+              <option value={3}>Advanced</option>
             </select>
           </div>
         )}

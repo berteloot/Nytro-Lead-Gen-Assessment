@@ -29,14 +29,15 @@ export interface AIRecommendation {
   risks: string[];
 }
 
-export const recommendationPrompt = (input: RecommendationInput): string => `
-You are a B2B growth strategist for mid-market tech companies. Use only the supplied inputs. No external facts. Be concise and specific.
+export const recommendationPrompt = (input: RecommendationInput, calibration?: { monthlyLeads: string; meetingRate: string; salesCycle: string }): string => `
+You are a B2B growth strategist for mid-market tech companies. Use ONLY the supplied inputs. No external facts. Be concise and specific.
 
 Company: ${input.company}
 Industry: ${input.industry}
 Scores: ${JSON.stringify(input.scores)}
 Gaps: ${input.gaps.join(", ")}
 Stack: ${input.stack.join(", ")}
+${calibration ? `Calibration Data: Monthly Leads: ${calibration.monthlyLeads}, Meeting Rate: ${calibration.meetingRate}, Sales Cycle: ${calibration.salesCycle}` : 'No calibration data provided'}
 
 Return ONLY valid JSON in this exact format:
 {
@@ -60,7 +61,9 @@ Return ONLY valid JSON in this exact format:
   "recommended_next_step": "string CTA aligned to outcome"
 }
 
-Prompt Guardrails:
+CRITICAL GUARDRAILS:
+- "Do not invent metrics or stack. Tie every recommendation to a specific lever gap or calibration answer."
+- "If inputs are sparse, lower confidence and state that more data is needed."
 - "If a module has no present levers, do not invent recommendations. Offer prerequisites only."
 - "Prefer actions that measurably reduce CAC or shorten time to first meeting."
 - "Tie every recommendation to the specific gaps detected."
@@ -79,6 +82,7 @@ Prompt Guardrails:
 - "Flag if foundational infra is missing before recommending advanced tactics."
 - "If overall < 20: Focus ONLY on foundational capabilities (CRM, basic content, one channel)."
 - "If overall < 30: Add 'Start here: [foundational step]' before advanced recommendations."
+- "If calibration data is missing, acknowledge limitations in recommendations."
 `;
 
 export const summaryPrompt = (input: RecommendationInput): string => `
