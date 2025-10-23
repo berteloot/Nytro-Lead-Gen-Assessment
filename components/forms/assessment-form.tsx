@@ -59,7 +59,7 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
     }
   }
 
-  const updateResponses = (module: string, lever: string, data: { present: boolean; maturity: number }) => {
+  const updateResponses = (module: string, lever: string, data: { present: boolean; maturity: number | null; applicable: boolean }) => {
     setFormData(prev => ({
       ...prev,
       responses: {
@@ -101,6 +101,23 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
       default:
         return false
     }
+  }
+
+  const hasIncompleteResponses = () => {
+    // Check if any present lever has null maturity
+    for (const responseModule of Object.values(formData.responses)) {
+      if (responseModule) {
+        for (const lever of Object.values(responseModule)) {
+          if (lever && typeof lever === 'object' && 'present' in lever && 'maturity' in lever) {
+            const typedLever = lever as { present: boolean; maturity: number | null; applicable: boolean };
+            if (typedLever.present && typedLever.maturity === null) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   const progress = calculateProgress(currentStep, totalSteps)
@@ -196,10 +213,10 @@ export function AssessmentForm({ onComplete }: AssessmentFormProps) {
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={!isStepValid()}
+                disabled={!isStepValid() || hasIncompleteResponses()}
                 className="bg-[#F86A0E] hover:bg-[#e55a0a] text-white"
               >
-                Get My Health Check
+                {hasIncompleteResponses() ? 'Please complete all maturity selections' : 'Get My Health Check'}
               </Button>
             )}
           </div>
@@ -215,7 +232,7 @@ function LeadGenStep({
   onUpdate 
 }: { 
   responses: AssessmentResponses
-  onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number }) => void 
+  onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number | null; applicable: boolean }) => void 
 }) {
   return (
     <div className="space-y-6">
@@ -350,7 +367,7 @@ function InfrastructureStep({
   onUpdate 
 }: { 
   responses: AssessmentResponses
-  onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number }) => void 
+  onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number | null; applicable: boolean }) => void 
 }) {
   // Suppress unused parameter warnings for interface compliance
   void responses;
@@ -540,7 +557,7 @@ function CompanyStep({
   emailError
 }: { 
   responses: AssessmentResponses
-  onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number }) => void
+  onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number | null; applicable: boolean }) => void
   formData: {
     email: string;
     company: string;
@@ -626,20 +643,30 @@ function SimpleQuestion({
 }: { 
   label: string
   description?: string
-  value?: { present: boolean; maturity: number }
-  onChange: (data: { present: boolean; maturity: number }) => void 
+  value?: { present: boolean; maturity: number | null; applicable: boolean }
+  onChange: (data: { present: boolean; maturity: number | null; applicable: boolean }) => void 
 }) {
   const handlePresentChange = (present: boolean) => {
     onChange({
       present,
-      maturity: present ? 1 : 0 // Default to basic (1) when checked, 0 when unchecked
+      maturity: present ? null : 0,
+      applicable: true
     });
   };
 
   const handleMaturityChange = (maturity: number) => {
     onChange({
       present: true,
-      maturity
+      maturity,
+      applicable: true
+    });
+  };
+
+  const handleApplicableChange = (applicable: boolean) => {
+    onChange({
+      present: false,
+      maturity: 0,
+      applicable
     });
   };
 
@@ -653,31 +680,47 @@ function SimpleQuestion({
       </div>
       
       <div className="space-y-3">
-        <label className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={value?.present || false}
-            onChange={(e) => handlePresentChange(e.target.checked)}
-            className="rounded"
-          />
-          <span className="text-sm">We do this</span>
-        </label>
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={value?.present || false}
+              onChange={(e) => handlePresentChange(e.target.checked)}
+              className="rounded"
+            />
+            <span className="text-sm">We do this</span>
+          </label>
+          
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={value?.applicable === false}
+              onChange={(e) => handleApplicableChange(!e.target.checked)}
+              className="rounded"
+            />
+            <span className="text-sm">Not applicable to us</span>
+          </label>
+        </div>
         
         {value?.present && (
           <div className="ml-6 space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              How well do you do this?
+              How well do you do this? <span className="text-red-500">*</span>
             </label>
             <select 
-              value={value.maturity || 1}
+              value={value.maturity || ''}
               onChange={(e) => handleMaturityChange(Number(e.target.value))}
-              className="text-sm p-2 border rounded w-full max-w-xs"
+              className={`text-sm p-2 border rounded w-full max-w-xs ${value.maturity === null ? 'border-red-300' : ''}`}
+              required
             >
-              <option value={0}>Not in place</option>
-              <option value={1}>Basic</option>
-              <option value={2}>Consistent</option>
-              <option value={3}>Advanced</option>
+              <option value="">Select maturity level</option>
+              <option value={1}>Basic - Ad-hoc/inconsistent</option>
+              <option value={2}>Consistent - Defined process</option>
+              <option value={3}>Advanced - Well-optimized</option>
             </select>
+            {value.maturity === null && (
+              <p className="text-xs text-red-500">Please select a maturity level</p>
+            )}
           </div>
         )}
       </div>

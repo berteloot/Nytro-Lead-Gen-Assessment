@@ -2,46 +2,46 @@
 
 export interface AssessmentResponses {
   inbound: {
-    seo?: { present: boolean; maturity: number };
-    leadMagnets?: { present: boolean; maturity: number };
-    webinars?: { present: boolean; maturity: number };
+    seo?: { present: boolean; maturity: number | null; applicable: boolean };
+    leadMagnets?: { present: boolean; maturity: number | null; applicable: boolean };
+    webinars?: { present: boolean; maturity: number | null; applicable: boolean };
   };
   outbound: {
-    sequences?: { present: boolean; maturity: number };
-    linkedin?: { present: boolean; maturity: number };
-    phone?: { present: boolean; maturity: number };
-    deliverability?: { present: boolean; maturity: number };
+    sequences?: { present: boolean; maturity: number | null; applicable: boolean };
+    linkedin?: { present: boolean; maturity: number | null; applicable: boolean };
+    phone?: { present: boolean; maturity: number | null; applicable: boolean };
+    deliverability?: { present: boolean; maturity: number | null; applicable: boolean };
   };
   content: {
-    blog?: { present: boolean; maturity: number };
-    caseStudies?: { present: boolean; maturity: number };
-    moFuAssets?: { present: boolean; maturity: number };
-    boFuAssets?: { present: boolean; maturity: number };
-    distribution?: { present: boolean; maturity: number };
+    blog?: { present: boolean; maturity: number | null; applicable: boolean };
+    caseStudies?: { present: boolean; maturity: number | null; applicable: boolean };
+    moFuAssets?: { present: boolean; maturity: number | null; applicable: boolean };
+    boFuAssets?: { present: boolean; maturity: number | null; applicable: boolean };
+    distribution?: { present: boolean; maturity: number | null; applicable: boolean };
   };
   paid: {
-    ppc?: { present: boolean; maturity: number };
-    socialAds?: { present: boolean; maturity: number };
-    retargeting?: { present: boolean; maturity: number };
-    abm?: { present: boolean; maturity: number };
-    linkedinLeadGen?: { present: boolean; maturity: number };
+    ppc?: { present: boolean; maturity: number | null; applicable: boolean };
+    socialAds?: { present: boolean; maturity: number | null; applicable: boolean };
+    retargeting?: { present: boolean; maturity: number | null; applicable: boolean };
+    abm?: { present: boolean; maturity: number | null; applicable: boolean };
+    linkedinLeadGen?: { present: boolean; maturity: number | null; applicable: boolean };
   };
   nurture: {
-    drip?: { present: boolean; maturity: number };
-    reactivation?: { present: boolean; maturity: number };
-    scoringTriggers?: { present: boolean; maturity: number };
-    intentSignals?: { present: boolean; maturity: number };
+    drip?: { present: boolean; maturity: number | null; applicable: boolean };
+    reactivation?: { present: boolean; maturity: number | null; applicable: boolean };
+    scoringTriggers?: { present: boolean; maturity: number | null; applicable: boolean };
+    intentSignals?: { present: boolean; maturity: number | null; applicable: boolean };
   };
   infra: {
-    crm?: { present: boolean; maturity: number };
-    marketingAutomation?: { present: boolean; maturity: number };
-    enrichment?: { present: boolean; maturity: number };
-    realtimeSync?: { present: boolean; maturity: number };
+    crm?: { present: boolean; maturity: number | null; applicable: boolean };
+    marketingAutomation?: { present: boolean; maturity: number | null; applicable: boolean };
+    enrichment?: { present: boolean; maturity: number | null; applicable: boolean };
+    realtimeSync?: { present: boolean; maturity: number | null; applicable: boolean };
   };
   attr: {
-    multiTouch?: { present: boolean; maturity: number };
-    dashboards?: { present: boolean; maturity: number };
-    ctaTracking?: { present: boolean; maturity: number };
+    multiTouch?: { present: boolean; maturity: number | null; applicable: boolean };
+    dashboards?: { present: boolean; maturity: number | null; applicable: boolean };
+    ctaTracking?: { present: boolean; maturity: number | null; applicable: boolean };
   };
 }
 
@@ -92,29 +92,40 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   // Maturity weight multipliers: 0=not in place, 1=basic, 2=consistent, 3=advanced
   const maturityWeights = [0, 0.5, 0.75, 1.0];
   
-  const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number }> = {}, leverWeights: Record<string, number>, moduleName: string) => {
+  const moduleScore = (answers: Record<string, { present?: boolean; maturity?: number | null; applicable?: boolean }> = {}, leverWeights: Record<string, number>, moduleName: string) => {
     console.log(`Scoring ${moduleName}:`, answers);
-    let s = 0, max = 0;
+    let s = 0, maxApplicable = 0;
+    
     for (const k of Object.keys(leverWeights)) {
       const w = leverWeights[k] ?? 0;
-      const present = answers?.[k]?.present ? 1 : 0;
-      const maturityRaw = answers?.[k]?.maturity;
-      const maturity = typeof maturityRaw === 'number' ? maturityRaw : 0; // 0..3
+      const response = answers?.[k];
       
-      // Validation: warn if present=true but maturity=0
-      if (present && maturity === 0) {
-        console.warn(`${moduleName}.${k}: marked present but maturity is 0`);
+      // Skip if not applicable
+      if (response?.applicable === false) {
+        continue;
       }
       
-      // Use maturity weight multiplier instead of linear scaling
-      const maturityMultiplier = maturityWeights[Math.min(maturity, 3)] || 0;
-      const score = present * maturityMultiplier * w;
-      s += score;
-      max += w;
-      console.log(`  ${k}: present=${present}, maturity=${maturity}, multiplier=${maturityMultiplier}, weight=${w}, score=${score}`);
+      // Only count applicable levers in denominator
+      maxApplicable += w;
+      
+      const present = response?.present ? 1 : 0;
+      const maturityRaw = response?.maturity;
+      const maturity = typeof maturityRaw === 'number' ? maturityRaw : 0; // 0..3
+      
+      // Only score if present and maturity is set (not null)
+      if (present && maturity !== null && maturity > 0) {
+        const maturityMultiplier = maturityWeights[Math.min(maturity, 3)] || 0;
+        const score = maturityMultiplier * w;
+        s += score;
+        console.log(`  ${k}: present=${present}, maturity=${maturity}, multiplier=${maturityMultiplier}, weight=${w}, score=${score}`);
+      } else if (present && maturity === null) {
+        console.warn(`${moduleName}.${k}: marked present but maturity not set`);
+      }
     }
-    const finalScore = Math.round((s / Math.max(max, 1)) * 100);
-    console.log(`${moduleName} final score: ${finalScore}`);
+    
+    // Normalize against applicable weights only
+    const finalScore = maxApplicable > 0 ? Math.round((s / maxApplicable) * 100) : 0;
+    console.log(`${moduleName} final score: ${finalScore} (applicable weight: ${maxApplicable})`);
     return finalScore;
   };
 
@@ -198,27 +209,27 @@ export function scoreAssessment(responses: AssessmentResponses): AssessmentScore
   if (infra < 40) {
     prerequisites.push('Marketing infrastructure needs improvement before advanced tactics');
   }
-  if (responses.outbound?.deliverability?.present && responses.outbound.deliverability.maturity < 2) {
+  if (responses.outbound?.deliverability?.present && (responses.outbound.deliverability.maturity || 0) < 2) {
     prerequisites.push('Email deliverability needs improvement before scaling outbound');
   }
-  if (responses.infra?.crm?.present && responses.infra.crm.maturity < 2) {
+  if (responses.infra?.crm?.present && (responses.infra.crm.maturity || 0) < 2) {
     prerequisites.push('CRM hygiene needs improvement before advanced automation');
   }
-  if (responses.attr?.multiTouch?.present && responses.attr.multiTouch.maturity < 2) {
+  if (responses.attr?.multiTouch?.present && (responses.attr.multiTouch.maturity || 0) < 2) {
     prerequisites.push('Attribution tracking needs improvement before scaling spend');
   }
 
   // Risk checks
-  if (responses.paid?.ppc?.present && responses.paid.ppc.maturity >= 2 && 
-      responses.content?.boFuAssets?.present && responses.content.boFuAssets.maturity < 2) {
+  if (responses.paid?.ppc?.present && (responses.paid.ppc.maturity || 0) >= 2 && 
+      responses.content?.boFuAssets?.present && (responses.content.boFuAssets.maturity || 0) < 2) {
     risks.push('Paid traffic may leak without strong bottom-of-funnel content');
   }
-  if (responses.nurture?.scoringTriggers?.present && responses.nurture.scoringTriggers.maturity < 2 &&
-      responses.nurture?.drip?.present && responses.nurture.drip.maturity >= 2) {
+  if (responses.nurture?.scoringTriggers?.present && (responses.nurture.scoringTriggers.maturity || 0) < 2 &&
+      responses.nurture?.drip?.present && (responses.nurture.drip.maturity || 0) >= 2) {
     risks.push('Lead scoring needs improvement to optimize nurture sequences');
   }
-  if (responses.outbound?.sequences?.present && responses.outbound.sequences.maturity >= 2 &&
-      responses.outbound?.deliverability?.present && responses.outbound.deliverability.maturity < 2) {
+  if (responses.outbound?.sequences?.present && (responses.outbound.sequences.maturity || 0) >= 2 &&
+      responses.outbound?.deliverability?.present && (responses.outbound.deliverability.maturity || 0) < 2) {
     risks.push('Outbound sequences may underperform without proper deliverability');
   }
 
@@ -279,8 +290,8 @@ export function computeGapImpact(responses: AssessmentResponses, _scores: Assess
     Object.entries(levers).forEach(([lever, weight]) => {
       const moduleResponses = responses[module as keyof AssessmentResponses];
       if (moduleResponses) {
-        const response = (moduleResponses as Record<string, { maturity?: number }>)[lever];
-        if (response) {
+        const response = (moduleResponses as Record<string, { present?: boolean; maturity?: number | null; applicable?: boolean }>)[lever];
+        if (response && response.applicable !== false) {
           const maturityMultiplier = maturityWeights[Math.min(response.maturity || 0, 3)] || 0;
           const impact = weight * (1 - maturityMultiplier);
           if (impact > 0) {
@@ -344,8 +355,8 @@ export function computeStructuredGaps(responses: AssessmentResponses, _scores: A
     Object.entries(levers).forEach(([lever, weight]) => {
       const moduleResponses = responses[module as keyof AssessmentResponses];
       if (moduleResponses) {
-        const response = (moduleResponses as Record<string, { present?: boolean; maturity?: number }>)[lever];
-        if (response) {
+        const response = (moduleResponses as Record<string, { present?: boolean; maturity?: number | null; applicable?: boolean }>)[lever];
+        if (response && response.applicable !== false) {
           const present = response.present || false;
           const maturity = response.maturity || 0;
           const multiplier = maturityWeights[Math.min(maturity, 3)] || 0;
@@ -370,15 +381,26 @@ export function computeStructuredGaps(responses: AssessmentResponses, _scores: A
 
 export function computeConfidence(responses: AssessmentResponses, _calibration?: { monthlyLeads: string; meetingRate: string; salesCycle: string }) {
   let answeredLevers = 0;
+  let modulesAnswered = 0;
 
-  // Count answered levers
+  // Count answered levers (only if present=false OR (present=true AND maturity is set))
   Object.values(responses).forEach(module => {
     if (module) {
+      let moduleHasAnswers = false;
       Object.values(module).forEach(lever => {
-        if (lever && typeof lever === 'object' && 'present' in lever && lever.present) {
-          answeredLevers++;
+        if (lever && typeof lever === 'object' && 'present' in lever && 'maturity' in lever && 'applicable' in lever) {
+          const typedLever = lever as { present: boolean; maturity: number | null; applicable: boolean };
+          // Count as answered if: not applicable OR (present=false) OR (present=true AND maturity is set)
+          const isAnswered = typedLever.applicable === false || 
+                           !typedLever.present || 
+                           (typedLever.present && typedLever.maturity !== null && typedLever.maturity > 0);
+          if (isAnswered) {
+            answeredLevers++;
+            moduleHasAnswers = true;
+          }
         }
       });
+      if (moduleHasAnswers) modulesAnswered++;
     }
   });
 
@@ -387,11 +409,11 @@ export function computeConfidence(responses: AssessmentResponses, _calibration?:
                           responses.infra?.marketingAutomation?.maturity !== undefined;
   const hasAttrMaturity = responses.attr?.multiTouch?.maturity !== undefined || 
                           responses.attr?.dashboards?.maturity !== undefined;
-  const hasNurtureMaturity = responses.nurture?.drip?.maturity !== undefined || 
-                             responses.nurture?.scoringTriggers?.maturity !== undefined;
+  // const hasNurtureMaturity = responses.nurture?.drip?.maturity !== undefined || 
+  //                            responses.nurture?.scoringTriggers?.maturity !== undefined;
   
-  // New confidence rules based on your specifications
-  if (answeredLevers >= 18 && hasInfraMaturity && hasAttrMaturity && hasNurtureMaturity) return 'high';
+  // Updated confidence rules
+  if (answeredLevers >= 18 && modulesAnswered >= 5 && hasInfraMaturity && hasAttrMaturity) return 'high';
   if (answeredLevers >= 9 && answeredLevers < 18) return 'medium';
   return 'low';
 }
