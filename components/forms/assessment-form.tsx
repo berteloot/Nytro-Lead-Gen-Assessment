@@ -291,7 +291,7 @@ function InfrastructureStep({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold">What's your current marketing setup?</h3>
+        <h3 className="text-lg font-semibold">What&apos;s your current marketing setup?</h3>
         <p className="text-sm text-gray-600 mt-2">
           Help us understand your tools and processes to give you better recommendations.
         </p>
@@ -387,6 +387,9 @@ function CompanyStep({
   updateFormData: (field: string, value: string) => void
   emailError: string
 }) {
+  // Suppress unused parameter warnings for interface compliance
+  void responses;
+  void onUpdate;
   return (
     <div className="space-y-6">
       <div>
