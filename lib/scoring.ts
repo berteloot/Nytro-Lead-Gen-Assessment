@@ -251,7 +251,8 @@ export function computeGaps(scores: AssessmentScores): string[] {
   return getTopGrowthLevers(scores);
 }
 
-export function computeGapImpact(responses: AssessmentResponses, scores: AssessmentScores) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function computeGapImpact(responses: AssessmentResponses, _scores: AssessmentScores) {
   const leverWeights = {
     inbound: { seo: 3, leadMagnets: 4, webinars: 3 },
     outbound: { sequences: 5, deliverability: 6, linkedin: 4, phone: 2 },
@@ -270,7 +271,7 @@ export function computeGapImpact(responses: AssessmentResponses, scores: Assessm
     Object.entries(levers).forEach(([lever, weight]) => {
       const moduleResponses = responses[module as keyof AssessmentResponses];
       if (moduleResponses) {
-        const response = (moduleResponses as any)[lever];
+        const response = (moduleResponses as Record<string, { maturity?: number }>)[lever];
         if (response) {
           const maturityMultiplier = maturityWeights[Math.min(response.maturity || 0, 3)] || 0;
           const impact = weight * (1 - maturityMultiplier);
@@ -330,6 +331,7 @@ export function fallbackLeversFromGaps(scores: AssessmentScores, responses: Asse
   });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getModuleDisplayName(module: string): string {
   const names: Record<string, string> = {
     inbound: 'Inbound Marketing',

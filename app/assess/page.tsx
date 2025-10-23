@@ -140,9 +140,9 @@ export default function AssessPage() {
       })
       setStep('results')
 
-      // Send follow-up email after showing results
+      // Send comprehensive report email after showing results
       try {
-        await fetch('/api/email/followup', {
+        await fetch('/api/email/report', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -152,9 +152,9 @@ export default function AssessPage() {
             email: data.email,
           }),
         })
-      } catch (followupError) {
-        console.error('Follow-up email failed:', followupError)
-        // Don't fail the flow if follow-up email fails
+      } catch (reportError) {
+        console.error('Report email failed:', reportError)
+        // Don't fail the flow if report email fails
       }
     } catch (error) {
       console.error('Assessment error:', error)

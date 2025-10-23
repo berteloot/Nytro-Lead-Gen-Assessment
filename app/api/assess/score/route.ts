@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         console.error('OpenAI recommendation failed:', e);
         recommendation = {
           summary: 'Assessment completed successfully. Here are your key growth opportunities.',
-          levers: fallbackLeversFromGaps(scores),
+          levers: fallbackLeversFromGaps(scores, body.responses),
           risks: [],
         };
       }
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       // No key at runtime. Use deterministic fallback.
       recommendation = {
         summary: 'Assessment completed successfully. Here are your key growth opportunities.',
-        levers: fallbackLeversFromGaps(scores),
+        levers: fallbackLeversFromGaps(scores, body.responses),
         risks: [],
       };
     }
