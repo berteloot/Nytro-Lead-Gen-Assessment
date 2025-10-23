@@ -217,7 +217,7 @@ export default function HomePage() {
             Join 200+ B2B Companies Who Found Their Growth Levers
           </h2>
           <p className="text-[#313C59] mb-6">
-            "Helped us realize why MQLs were stalling. Took 4 mins, changed our playbook." - Sarah M., VP Marketing
+            &ldquo;Helped us realize why MQLs were stalling. Took 4 mins, changed our playbook.&rdquo; - Sarah M., VP Marketing
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

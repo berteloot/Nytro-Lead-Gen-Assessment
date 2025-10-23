@@ -4,9 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
-import { getIndustryOptions, getCompanySizeOptions, getMaturityOptions, calculateProgress, validateEmail } from '@/lib/utils'
+import { calculateProgress, validateEmail } from '@/lib/utils'
 import { type AssessmentResponses } from '@/lib/scoring'
 
 interface AssessmentFormProps {
@@ -199,7 +197,7 @@ function LeadGenStep({
       <div>
         <h3 className="text-lg font-semibold">How do you currently generate leads?</h3>
         <p className="text-sm text-gray-600 mt-2">
-          Check all that apply. We'll show you what you're missing.
+          Check all that apply. We&apos;ll show you what you&apos;re missing.
         </p>
       </div>
       
@@ -287,6 +285,9 @@ function InfrastructureStep({
   responses: AssessmentResponses
   onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number }) => void 
 }) {
+  // Suppress unused parameter warnings for interface compliance
+  void responses;
+  void onUpdate;
   return (
     <div className="space-y-6">
       <div>
@@ -382,7 +383,7 @@ function CompanyStep({
 }: { 
   responses: AssessmentResponses
   onUpdate: (module: string, lever: string, data: { present: boolean; maturity: number }) => void
-  formData: any
+  formData: Record<string, string>
   updateFormData: (field: string, value: string) => void
   emailError: string
 }) {
@@ -391,7 +392,7 @@ function CompanyStep({
       <div>
         <h3 className="text-lg font-semibold">Almost done! Just a few quick details</h3>
         <p className="text-sm text-gray-600 mt-2">
-          We'll personalize your report with this info.
+          We&apos;ll personalize your report with this info.
         </p>
       </div>
       
@@ -438,7 +439,7 @@ function CompanyStep({
             required
           />
           <p className="text-xs text-gray-500 mt-1">
-            We'll send your personalized report here
+            We&apos;ll send your personalized report here
           </p>
           {emailError && (
             <p className="text-xs text-red-500 mt-1">{emailError}</p>
